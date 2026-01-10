@@ -60,7 +60,13 @@ export default defineContentScript({
     async function startScan() {
       if (isScanning) return;
 
-      const settings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
+      let settings: Settings;
+      try {
+        settings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
+      } catch (error) {
+        alert("Extension error. Please refresh the page and try again.");
+        return;
+      }
 
       if (!settings.apiKey) {
         alert("Please configure your OpenRouter API key in the extension settings.");
@@ -89,24 +95,34 @@ export default defineContentScript({
         replies[i].status = "analyzing";
         renderPanel();
 
-        const result = await browser.runtime.sendMessage({
-          type: "ANALYZE_REPLY",
-          text: replies[i].text,
-        }) as AnalysisResult;
+        try {
+          const result = await browser.runtime.sendMessage({
+            type: "ANALYZE_REPLY",
+            text: replies[i].text,
+          }) as AnalysisResult;
 
-        replies[i].result = result;
+          replies[i].result = result;
 
-        if (result.error) {
+          if (result.error) {
+            replies[i].status = "error";
+          } else if (result.isHate && result.confidence >= settings.confidenceThreshold) {
+            replies[i].status = "hate";
+            renderPanel();
+
+            // Attempt to block
+            const blocked = await blockUser(replies[i].element);
+            replies[i].status = blocked ? "blocked" : "hate";
+          } else {
+            replies[i].status = "safe";
+          }
+        } catch (error) {
           replies[i].status = "error";
-        } else if (result.isHate && result.confidence >= settings.confidenceThreshold) {
-          replies[i].status = "hate";
-          renderPanel();
-
-          // Attempt to block
-          const blocked = await blockUser(replies[i].element);
-          replies[i].status = blocked ? "blocked" : "hate";
-        } else {
-          replies[i].status = "safe";
+          replies[i].result = {
+            isHate: false,
+            confidence: 0,
+            reason: "Connection error",
+            error: error instanceof Error ? error.message : "Extension disconnected",
+          };
         }
 
         renderPanel();
