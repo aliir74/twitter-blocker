@@ -4,19 +4,25 @@ import { getSettings } from "@/lib/storage";
 export default defineBackground(() => {
   console.log("Twitter Hate Blocker background worker started");
 
-  browser.runtime.onMessage.addListener(async (message, sender) => {
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "GET_SETTINGS") {
-      return await getSettings();
+      getSettings().then(sendResponse);
+      return true;
     }
 
     if (message.type === "ANALYZE_REPLY") {
-      const settings = await getSettings();
-      if (!settings.apiKey) {
-        return { error: "No API key configured" };
-      }
-      return await analyzeReply(message.text, settings.apiKey, settings.model);
+      getSettings().then(async (settings) => {
+        if (!settings.apiKey) {
+          sendResponse({ error: "No API key configured" });
+          return;
+        }
+        const result = await analyzeReply(message.text, settings.apiKey, settings.model);
+        sendResponse(result);
+      });
+      return true;
     }
 
-    return { error: "Unknown message type" };
+    sendResponse({ error: "Unknown message type" });
+    return false;
   });
 });

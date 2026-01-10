@@ -15,7 +15,7 @@ export interface ReplyData {
 
 export default defineContentScript({
   matches: ["*://twitter.com/*", "*://x.com/*"],
-  cssInjectionMode: "ui",
+  cssInjectionMode: "manifest",
 
   async main(ctx) {
     console.log("Twitter Hate Blocker content script loaded");
