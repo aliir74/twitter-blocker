@@ -76,6 +76,33 @@ export default function App() {
         />
       </div>
 
+      <div className="form-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={settings.autoScroll}
+            onChange={(e) => setSettings({ ...settings, autoScroll: e.target.checked })}
+          />
+          Enable auto-scroll to find more replies
+        </label>
+      </div>
+
+      {settings.autoScroll && (
+        <div className="form-group">
+          <label htmlFor="maxScrollAttempts">
+            Stop after {settings.maxScrollAttemptsWithoutNewContent} scroll attempts with no new replies
+          </label>
+          <input
+            id="maxScrollAttempts"
+            type="range"
+            min="1"
+            max="10"
+            value={settings.maxScrollAttemptsWithoutNewContent}
+            onChange={(e) => setSettings({ ...settings, maxScrollAttemptsWithoutNewContent: parseInt(e.target.value) })}
+          />
+        </div>
+      )}
+
       <button onClick={handleSave}>Save Settings</button>
 
       {status && <div className="status">{status}</div>}

@@ -3,6 +3,8 @@ export interface Settings {
   model: string;
   maxReplies: number;
   confidenceThreshold: number;
+  autoScroll: boolean;
+  maxScrollAttemptsWithoutNewContent: number;
 }
 
 export const AVAILABLE_MODELS = [
@@ -18,6 +20,8 @@ export const DEFAULT_SETTINGS: Settings = {
   model: "google/gemma-2-9b-it",
   maxReplies: 50,
   confidenceThreshold: 80,
+  autoScroll: true,
+  maxScrollAttemptsWithoutNewContent: 3,
 };
 
 export async function getSettings(): Promise<Settings> {
