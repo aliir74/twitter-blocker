@@ -3,6 +3,7 @@ import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
 import type { Settings } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/openrouter";
+import { getNewRepliesFromDOM, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
 import "./style.css";
 
 export interface ReplyData {
@@ -75,20 +76,63 @@ export default defineContentScript({
 
       isScanning = true;
       replies = [];
+      const processedKeys = new Set<string>();
+      let scrollAttemptsWithoutNew = 0;
+
       renderButton();
       renderPanel();
 
-      // Get replies from DOM
-      const replyElements = getRepliesFromDOM(settings.maxReplies);
-      replies = replyElements.map((el) => ({
-        element: el.element,
-        username: el.username,
-        text: el.text,
-        status: "pending" as const,
-      }));
-      renderPanel();
+      // Phase 1: Collect replies with auto-scroll
+      while (isScanning && replies.length < settings.maxReplies) {
+        // Get new replies from current DOM state
+        const newReplies = getNewRepliesFromDOM(
+          processedKeys,
+          settings.maxReplies,
+          replies.length
+        );
 
-      // Analyze each reply
+        if (newReplies.length > 0) {
+          // Add new replies to our list
+          for (const el of newReplies) {
+            replies.push({
+              element: el.element,
+              username: el.username,
+              text: el.text,
+              status: "pending" as const,
+            });
+          }
+          renderPanel();
+          scrollAttemptsWithoutNew = 0;
+        }
+
+        // Check if we've reached max replies
+        if (replies.length >= settings.maxReplies) {
+          console.log(`Reached max replies limit (${settings.maxReplies})`);
+          break;
+        }
+
+        // Check if auto-scroll is enabled
+        if (!settings.autoScroll) {
+          console.log("Auto-scroll disabled, scanning only visible replies");
+          break;
+        }
+
+        // Try to scroll for more content
+        await scrollToLoadMore();
+        const foundNew = await waitForNewContent(2000);
+
+        if (!foundNew) {
+          scrollAttemptsWithoutNew++;
+          console.log(`No new content after scroll (attempt ${scrollAttemptsWithoutNew}/${settings.maxScrollAttemptsWithoutNewContent})`);
+
+          if (scrollAttemptsWithoutNew >= settings.maxScrollAttemptsWithoutNewContent) {
+            console.log("Max scroll attempts reached without new content");
+            break;
+          }
+        }
+      }
+
+      // Phase 2: Analyze collected replies sequentially
       for (let i = 0; i < replies.length; i++) {
         if (!isScanning) break;
 
@@ -149,39 +193,6 @@ export default defineContentScript({
   },
 });
 
-function getRepliesFromDOM(maxReplies: number): Array<{ element: HTMLElement; username: string; text: string }> {
-  const replies: Array<{ element: HTMLElement; username: string; text: string }> = [];
-  const cells = document.querySelectorAll('[data-testid="cellInnerDiv"]');
-
-  for (const cell of cells) {
-    if (replies.length >= maxReplies) break;
-
-    const tweet = cell.querySelector('[data-testid="tweet"]');
-    if (!tweet) continue;
-
-    // Skip the main tweet (first one)
-    if (cell === cells[0]) continue;
-
-    const tweetText = tweet.querySelector('[data-testid="tweetText"]');
-    const userNameEl = tweet.querySelector('[data-testid="User-Name"] a[href^="/"]');
-
-    if (!tweetText || !userNameEl) continue;
-
-    const username = userNameEl.getAttribute("href")?.replace("/", "") || "unknown";
-    const text = tweetText.textContent || "";
-
-    if (text.trim()) {
-      replies.push({
-        element: tweet as HTMLElement,
-        username,
-        text,
-      });
-    }
-  }
-
-  return replies;
-}
-
 async function blockUser(replyElement: HTMLElement): Promise<boolean> {
   try {
     // Find and click the "More" button (3-dot menu)
@@ -230,8 +241,4 @@ async function blockUser(replyElement: HTMLElement): Promise<boolean> {
     console.error("Error blocking user:", error);
     return false;
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

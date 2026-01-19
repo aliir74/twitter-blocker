@@ -44,6 +44,7 @@ pnpm vitest run tests/storage.test.ts
 
 - `lib/storage.ts` - Settings persistence via `browser.storage.sync`
 - `lib/openrouter.ts` - OpenRouter API client for hate speech classification
+- `lib/dom-utils.ts` - DOM utilities for Twitter reply extraction and auto-scroll
 
 ### Message Flow
 
@@ -54,6 +55,17 @@ Content Script → Background Worker → OpenRouter API
 ```
 
 The content script extracts reply text from Twitter DOM, sends it to the background worker, which calls OpenRouter for classification. Results flow back to update the UI and trigger blocking if confidence exceeds threshold.
+
+### Auto-Scroll Feature
+
+The extension supports auto-scrolling to collect lazy-loaded replies:
+
+1. **Collection Phase**: Scrolls the page to trigger Twitter's lazy loading, collecting new replies until `maxReplies` is reached or no new content appears after `maxScrollAttemptsWithoutNewContent` scroll attempts.
+2. **Analysis Phase**: Processes collected replies sequentially through the AI classifier.
+
+Key settings:
+- `autoScroll` (boolean, default: true) - Enable/disable auto-scroll
+- `maxScrollAttemptsWithoutNewContent` (number, default: 3) - Stop scrolling after N attempts with no new replies
 
 ### Twitter DOM Selectors
 
