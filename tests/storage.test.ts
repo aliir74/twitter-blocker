@@ -111,12 +111,20 @@ describe("storage", () => {
       expect(settings.blockingMode).toBe("hate");
     });
 
-    it("should return saved blockingMode", async () => {
+    it("should return saved blockingMode cultPraise", async () => {
       mockStorage["settings"] = { blockingMode: "cultPraise" };
 
       const settings = await getSettings();
 
       expect(settings.blockingMode).toBe("cultPraise");
+    });
+
+    it("should return saved blockingMode blockAll", async () => {
+      mockStorage["settings"] = { blockingMode: "blockAll" };
+
+      const settings = await getSettings();
+
+      expect(settings.blockingMode).toBe("blockAll");
     });
   });
 

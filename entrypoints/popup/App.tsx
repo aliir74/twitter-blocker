@@ -49,34 +49,63 @@ export default function App() {
             <span className="radio-text">Cult Praise</span>
             <span className="radio-hint">Block sycophantic, cult-like devotion</span>
           </label>
+          <label className={`radio-label ${settings.blockingMode === "blockAll" ? "radio-label-danger" : ""}`}>
+            <input
+              type="radio"
+              name="blockingMode"
+              value="blockAll"
+              checked={settings.blockingMode === "blockAll"}
+              onChange={(e) => setSettings({ ...settings, blockingMode: e.target.value as BlockingMode })}
+            />
+            <span className="radio-text">Block All</span>
+            <span className={`radio-hint ${settings.blockingMode === "blockAll" ? "radio-hint-warning" : ""}`}>Blocks EVERY account on the page - use with caution!</span>
+          </label>
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="apiKey">OpenRouter API Key</label>
-        <input
-          id="apiKey"
-          type="password"
-          value={settings.apiKey}
-          onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
-          placeholder="sk-or-..."
-        />
-      </div>
+      {settings.blockingMode !== "blockAll" && (
+        <>
+          <div className="form-group">
+            <label htmlFor="apiKey">OpenRouter API Key</label>
+            <input
+              id="apiKey"
+              type="password"
+              value={settings.apiKey}
+              onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
+              placeholder="sk-or-..."
+            />
+          </div>
 
-      <div className="form-group">
-        <label htmlFor="model">Model</label>
-        <select
-          id="model"
-          value={settings.model}
-          onChange={(e) => setSettings({ ...settings, model: e.target.value })}
-        >
-          {AVAILABLE_MODELS.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.name}
-            </option>
-          ))}
-        </select>
-      </div>
+          <div className="form-group">
+            <label htmlFor="model">Model</label>
+            <select
+              id="model"
+              value={settings.model}
+              onChange={(e) => setSettings({ ...settings, model: e.target.value })}
+            >
+              {AVAILABLE_MODELS.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confidenceThreshold">
+              Block if confidence &gt; {settings.confidenceThreshold}%
+            </label>
+            <input
+              id="confidenceThreshold"
+              type="range"
+              min="50"
+              max="100"
+              value={settings.confidenceThreshold}
+              onChange={(e) => setSettings({ ...settings, confidenceThreshold: parseInt(e.target.value) })}
+            />
+          </div>
+        </>
+      )}
 
       <div className="form-group">
         <label htmlFor="maxReplies">Max Replies to Scan</label>
@@ -87,20 +116,6 @@ export default function App() {
           max="200"
           value={settings.maxReplies}
           onChange={(e) => setSettings({ ...settings, maxReplies: parseInt(e.target.value) || 50 })}
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="confidenceThreshold">
-          Block if confidence &gt; {settings.confidenceThreshold}%
-        </label>
-        <input
-          id="confidenceThreshold"
-          type="range"
-          min="50"
-          max="100"
-          value={settings.confidenceThreshold}
-          onChange={(e) => setSettings({ ...settings, confidenceThreshold: parseInt(e.target.value) })}
         />
       </div>
 
