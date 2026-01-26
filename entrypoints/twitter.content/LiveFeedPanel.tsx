@@ -20,8 +20,8 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
     blocked: replies.filter((r) => r.status === "blocked").length,
   };
 
-  const flaggedLabel = blockingMode === "hate" ? "Hate" : "Cult";
-  const modeTitle = blockingMode === "hate" ? "Hate Speech" : "Cult Praise";
+  const flaggedLabel = blockingMode === "hate" ? "Hate" : blockingMode === "cultPraise" ? "Cult" : "Queued";
+  const modeTitle = blockingMode === "hate" ? "Hate Speech" : blockingMode === "cultPraise" ? "Cult Praise" : "Block All";
 
   return (
     <div className="thb-panel">
@@ -61,13 +61,17 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
 }
 
 function StatusBadge({ status, confidence, blockingMode }: { status: ReplyData["status"]; confidence?: number; blockingMode: BlockingMode }) {
-  const flaggedLabel = blockingMode === "hate" ? "Hate" : "Cult";
+  const isBlockAll = blockingMode === "blockAll";
+  const flaggedLabel = blockingMode === "hate" ? "Hate" : blockingMode === "cultPraise" ? "Cult" : "Queued";
+
+  // Don't show confidence for blockAll mode
+  const showConfidence = !isBlockAll && confidence;
 
   const badges: Record<ReplyData["status"], { label: string; className: string }> = {
     pending: { label: "Pending", className: "thb-badge-pending" },
-    analyzing: { label: "Analyzing...", className: "thb-badge-analyzing" },
-    safe: { label: `Safe${confidence ? ` (${confidence}%)` : ""}`, className: "thb-badge-safe" },
-    flagged: { label: `${flaggedLabel} (${confidence}%)`, className: "thb-badge-flagged" },
+    analyzing: { label: isBlockAll ? "Processing..." : "Analyzing...", className: "thb-badge-analyzing" },
+    safe: { label: `Safe${showConfidence ? ` (${confidence}%)` : ""}`, className: "thb-badge-safe" },
+    flagged: { label: `${flaggedLabel}${showConfidence ? ` (${confidence}%)` : ""}`, className: "thb-badge-flagged" },
     blocked: { label: "Blocked", className: "thb-badge-blocked" },
     error: { label: "Error", className: "thb-badge-error" },
   };

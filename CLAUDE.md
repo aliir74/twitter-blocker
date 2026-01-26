@@ -8,11 +8,13 @@ Twitter Hate Blocker is a Chrome extension that scans replies on Twitter/X, dete
 
 ### Blocking Modes
 
-The extension supports two mutually exclusive blocking modes (user selects one):
+The extension supports three mutually exclusive blocking modes (user selects one):
 
 1. **Hate Speech** (default) - Detects direct hatred, slurs, harassment, and offensive language targeting individuals or groups. Does not flag political opinions or disagreements.
 
 2. **Cult Praise** - Detects abnormally sycophantic, cult-like devotion including worship-like adoration, blind obedience language, and extreme tribalism. Does not flag normal positive engagement or fan enthusiasm.
+
+3. **Block All** - Blocks every account found on the page without any LLM analysis. Useful for hashtag pages where user wants to block all participants. Shows a confirmation dialog before starting.
 
 ## Commands
 
@@ -72,7 +74,7 @@ The extension supports auto-scrolling to collect lazy-loaded replies:
 2. **Analysis Phase**: Processes collected replies sequentially through the AI classifier.
 
 Key settings:
-- `blockingMode` ("hate" | "cultPraise", default: "hate") - Select which type of content to detect and block
+- `blockingMode` ("hate" | "cultPraise" | "blockAll", default: "hate") - Select which type of content to detect and block
 - `dryRun` (boolean, default: false) - Analyze only without actually blocking users
 - `autoScroll` (boolean, default: true) - Enable/disable auto-scroll
 - `maxScrollAttemptsWithoutNewContent` (number, default: 3) - Stop scrolling after N attempts with no new replies

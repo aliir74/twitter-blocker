@@ -44,6 +44,32 @@
   background: #92400e;
 }
 
+/* Block All mode button */
+.thb-floating-button.thb-block-all {
+  background: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.thb-floating-button.thb-block-all:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+}
+
+.thb-floating-button.thb-block-all:disabled {
+  background: #991b1b;
+}
+
+/* Block All with dry-run (warning color takes precedence) */
+.thb-floating-button.thb-block-all.thb-dry-run {
+  background: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.thb-floating-button.thb-block-all.thb-dry-run:hover:not(:disabled) {
+  background: #d97706;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+
 .thb-spinner {
   width: 16px;
   height: 16px;

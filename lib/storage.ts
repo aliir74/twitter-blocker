@@ -1,4 +1,4 @@
-export type BlockingMode = "hate" | "cultPraise";
+export type BlockingMode = "hate" | "cultPraise" | "blockAll";
 
 export interface Settings {
   apiKey: string;

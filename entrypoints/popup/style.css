@@ -126,3 +126,13 @@ button:hover {
   color: #888;
   margin-left: 20px;
 }
+
+/* Block All danger styles */
+.radio-label-danger:has(input:checked) {
+  border-color: #ef4444;
+  background: #ef444420;
+}
+
+.radio-hint-warning {
+  color: #ef4444;
+}

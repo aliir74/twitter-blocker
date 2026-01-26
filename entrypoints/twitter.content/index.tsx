@@ -46,6 +46,7 @@ export default defineContentScript({
           onClick={startScan}
           isScanning={isScanning}
           dryRun={currentSettings?.dryRun}
+          blockingMode={currentSettings?.blockingMode}
         />
       );
     }
@@ -72,9 +73,22 @@ export default defineContentScript({
       }
       const settings = currentSettings;
 
-      if (!settings.apiKey) {
-        alert("Please configure your OpenRouter API key in the extension settings.");
-        return;
+      // Block All mode confirmation
+      if (settings.blockingMode === "blockAll") {
+        const dryRunText = settings.dryRun ? " (Dry Run - no actual blocks)" : "";
+        const confirmed = confirm(
+          `WARNING: Block All mode is enabled${dryRunText}.\n\n` +
+          `This will ${settings.dryRun ? "identify" : "BLOCK"} EVERY account found on this page ` +
+          `(up to ${settings.maxReplies} accounts).\n\n` +
+          `Are you sure you want to continue?`
+        );
+        if (!confirmed) return;
+      } else {
+        // Only require API key for LLM-based modes
+        if (!settings.apiKey) {
+          alert("Please configure your OpenRouter API key in the extension settings.");
+          return;
+        }
       }
 
       isScanning = true;
@@ -135,10 +149,33 @@ export default defineContentScript({
         }
       }
 
-      // Phase 2: Analyze collected replies sequentially
+      // Phase 2: Process collected replies
       for (let i = 0; i < replies.length; i++) {
         if (!isScanning) break;
 
+        // Block All mode: skip LLM analysis entirely
+        if (settings.blockingMode === "blockAll") {
+          replies[i].status = "flagged";
+          replies[i].result = {
+            isMatch: true,
+            confidence: 100,
+            reason: "Block All mode",
+          };
+          renderPanel();
+
+          // Attempt to block (unless dry-run mode)
+          if (!settings.dryRun) {
+            const blocked = await blockUser(replies[i].element);
+            replies[i].status = blocked ? "blocked" : "flagged";
+          }
+          renderPanel();
+
+          // Small delay between blocks
+          await sleep(300);
+          continue;
+        }
+
+        // LLM-based analysis for hate/cultPraise modes
         replies[i].status = "analyzing";
         renderPanel();
 
