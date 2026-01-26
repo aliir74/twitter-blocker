@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSettings, saveSettings, type Settings, AVAILABLE_MODELS, DEFAULT_SETTINGS } from "@/lib/storage";
+import { getSettings, saveSettings, type Settings, type BlockingMode, AVAILABLE_MODELS, DEFAULT_SETTINGS } from "@/lib/storage";
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -23,6 +23,34 @@ export default function App() {
   return (
     <div className="popup-container">
       <h1>Twitter Hate Blocker</h1>
+
+      <div className="form-group">
+        <label>Blocking Mode</label>
+        <div className="mode-selector">
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="blockingMode"
+              value="hate"
+              checked={settings.blockingMode === "hate"}
+              onChange={(e) => setSettings({ ...settings, blockingMode: e.target.value as BlockingMode })}
+            />
+            <span className="radio-text">Hate Speech</span>
+            <span className="radio-hint">Block offensive language and harassment</span>
+          </label>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="blockingMode"
+              value="cultPraise"
+              checked={settings.blockingMode === "cultPraise"}
+              onChange={(e) => setSettings({ ...settings, blockingMode: e.target.value as BlockingMode })}
+            />
+            <span className="radio-text">Cult Praise</span>
+            <span className="radio-hint">Block sycophantic, cult-like devotion</span>
+          </label>
+        </div>
+      </div>
 
       <div className="form-group">
         <label htmlFor="apiKey">OpenRouter API Key</label>
@@ -102,6 +130,17 @@ export default function App() {
           />
         </div>
       )}
+
+      <div className="form-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={settings.dryRun}
+            onChange={(e) => setSettings({ ...settings, dryRun: e.target.checked })}
+          />
+          Dry-run mode (analyze only, don't block)
+        </label>
+      </div>
 
       <button onClick={handleSave}>Save Settings</button>
 

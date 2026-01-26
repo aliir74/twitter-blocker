@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client";
 import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
-import type { Settings } from "@/lib/storage";
+import type { Settings, BlockingMode } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/openrouter";
 import { getNewRepliesFromDOM, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
 import "./style.css";
@@ -10,7 +10,7 @@ export interface ReplyData {
   element: HTMLElement;
   username: string;
   text: string;
-  status: "pending" | "analyzing" | "safe" | "hate" | "blocked" | "error";
+  status: "pending" | "analyzing" | "safe" | "flagged" | "blocked" | "error";
   result?: AnalysisResult;
 }
 
@@ -25,6 +25,7 @@ export default defineContentScript({
     let buttonRoot: ReactDOM.Root | null = null;
     let isScanning = false;
     let replies: ReplyData[] = [];
+    let currentSettings: Settings | null = null;
 
     // Create UI containers
     const buttonContainer = document.createElement("div");
@@ -44,6 +45,7 @@ export default defineContentScript({
         <FloatingButton
           onClick={startScan}
           isScanning={isScanning}
+          dryRun={currentSettings?.dryRun}
         />
       );
     }
@@ -54,6 +56,7 @@ export default defineContentScript({
           replies={replies}
           isScanning={isScanning}
           onClose={stopScan}
+          blockingMode={currentSettings?.blockingMode ?? "hate"}
         />
       );
     }
@@ -61,13 +64,13 @@ export default defineContentScript({
     async function startScan() {
       if (isScanning) return;
 
-      let settings: Settings;
       try {
-        settings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
+        currentSettings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
       } catch (error) {
         alert("Extension error. Please refresh the page and try again.");
         return;
       }
+      const settings = currentSettings;
 
       if (!settings.apiKey) {
         alert("Please configure your OpenRouter API key in the extension settings.");
@@ -149,20 +152,22 @@ export default defineContentScript({
 
           if (result.error) {
             replies[i].status = "error";
-          } else if (result.isHate && result.confidence >= settings.confidenceThreshold) {
-            replies[i].status = "hate";
+          } else if (result.isMatch && result.confidence >= settings.confidenceThreshold) {
+            replies[i].status = "flagged";
             renderPanel();
 
-            // Attempt to block
-            const blocked = await blockUser(replies[i].element);
-            replies[i].status = blocked ? "blocked" : "hate";
+            // Attempt to block (unless dry-run mode)
+            if (!settings.dryRun) {
+              const blocked = await blockUser(replies[i].element);
+              replies[i].status = blocked ? "blocked" : "flagged";
+            }
           } else {
             replies[i].status = "safe";
           }
         } catch (error) {
           replies[i].status = "error";
           replies[i].result = {
-            isHate: false,
+            isMatch: false,
             confidence: 0,
             reason: "Connection error",
             error: error instanceof Error ? error.message : "Extension disconnected",
@@ -187,9 +192,18 @@ export default defineContentScript({
       renderPanel();
     }
 
-    // Initial render
-    renderButton();
-    renderPanel();
+    // Load initial settings and render
+    async function init() {
+      try {
+        currentSettings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
+      } catch {
+        // Settings will be loaded when scan starts
+      }
+      renderButton();
+      renderPanel();
+    }
+
+    init();
   },
 });
 

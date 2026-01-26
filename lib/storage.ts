@@ -1,3 +1,5 @@
+export type BlockingMode = "hate" | "cultPraise";
+
 export interface Settings {
   apiKey: string;
   model: string;
@@ -5,6 +7,8 @@ export interface Settings {
   confidenceThreshold: number;
   autoScroll: boolean;
   maxScrollAttemptsWithoutNewContent: number;
+  blockingMode: BlockingMode;
+  dryRun: boolean;
 }
 
 export const AVAILABLE_MODELS = [
@@ -19,9 +23,11 @@ export const DEFAULT_SETTINGS: Settings = {
   apiKey: "",
   model: "google/gemma-2-9b-it",
   maxReplies: 50,
-  confidenceThreshold: 80,
+  confidenceThreshold: 90,
   autoScroll: true,
   maxScrollAttemptsWithoutNewContent: 3,
+  blockingMode: "hate",
+  dryRun: false,
 };
 
 export async function getSettings(): Promise<Settings> {

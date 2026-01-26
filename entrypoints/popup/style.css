@@ -85,3 +85,44 @@ button:hover {
   text-align: center;
   font-size: 13px;
 }
+
+/* Mode Selector */
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #252542;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.radio-label:has(input:checked) {
+  border-color: #6366f1;
+  background: #6366f120;
+}
+
+.radio-label input[type="radio"] {
+  accent-color: #6366f1;
+}
+
+.radio-text {
+  font-weight: 600;
+  color: #fff;
+}
+
+.radio-hint {
+  width: 100%;
+  font-size: 12px;
+  color: #888;
+  margin-left: 20px;
+}

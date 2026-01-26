@@ -18,7 +18,7 @@ describe("openrouter", () => {
           choices: [
             {
               message: {
-                content: '{"isHate": false, "confidence": 15, "reason": "Normal greeting"}',
+                content: '{"isMatch": false, "confidence": 15, "reason": "Normal greeting"}',
               },
             },
           ],
@@ -27,20 +27,20 @@ describe("openrouter", () => {
 
       const result = await analyzeReply("Hello everyone!", "test-api-key", "google/gemma-2-9b-it");
 
-      expect(result.isHate).toBe(false);
+      expect(result.isMatch).toBe(false);
       expect(result.confidence).toBe(15);
       expect(result.reason).toBe("Normal greeting");
       expect(result.error).toBeUndefined();
     });
 
-    it("should return analysis result for hate content", async () => {
+    it("should return analysis result for flagged content", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           choices: [
             {
               message: {
-                content: '{"isHate": true, "confidence": 92, "reason": "Contains slur and threat"}',
+                content: '{"isMatch": true, "confidence": 92, "reason": "Contains slur and threat"}',
               },
             },
           ],
@@ -49,7 +49,7 @@ describe("openrouter", () => {
 
       const result = await analyzeReply("hateful content here", "test-api-key", "google/gemma-2-9b-it");
 
-      expect(result.isHate).toBe(true);
+      expect(result.isMatch).toBe(true);
       expect(result.confidence).toBe(92);
       expect(result.reason).toBe("Contains slur and threat");
     });
@@ -58,7 +58,7 @@ describe("openrouter", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: '{"isHate": false, "confidence": 10, "reason": "Safe"}' } }],
+          choices: [{ message: { content: '{"isMatch": false, "confidence": 10, "reason": "Safe"}' } }],
         }),
       });
 
@@ -78,6 +78,34 @@ describe("openrouter", () => {
       expect(body.messages[1].content).toBe("test text");
     });
 
+    it("should use hate speech prompt by default", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"isMatch": false, "confidence": 10, "reason": "Safe"}' } }],
+        }),
+      });
+
+      await analyzeReply("test text", "api-key", "model");
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.messages[0].content).toContain("hate speech classifier");
+    });
+
+    it("should use cult praise prompt when mode is cultPraise", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"isMatch": true, "confidence": 85, "reason": "Cult-like devotion"}' } }],
+        }),
+      });
+
+      await analyzeReply("test text", "api-key", "model", "cultPraise");
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.messages[0].content).toContain("cult-like praise detector");
+    });
+
     it("should handle API error response", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -87,7 +115,7 @@ describe("openrouter", () => {
 
       const result = await analyzeReply("test", "bad-key", "google/gemma-2-9b-it");
 
-      expect(result.isHate).toBe(false);
+      expect(result.isMatch).toBe(false);
       expect(result.confidence).toBe(0);
       expect(result.error).toContain("401");
     });
@@ -110,7 +138,7 @@ describe("openrouter", () => {
 
       const result = await analyzeReply("test", "api-key", "google/gemma-2-9b-it");
 
-      expect(result.isHate).toBe(false);
+      expect(result.isMatch).toBe(false);
       expect(result.confidence).toBe(0);
       expect(result.error).toBe("Network error");
     });
