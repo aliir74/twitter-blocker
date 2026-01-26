@@ -16,7 +16,7 @@ export default defineBackground(() => {
           sendResponse({ error: "No API key configured" });
           return;
         }
-        const result = await analyzeReply(message.text, settings.apiKey, settings.model);
+        const result = await analyzeReply(message.text, settings.apiKey, settings.model, settings.blockingMode);
         sendResponse(result);
       });
       return true;

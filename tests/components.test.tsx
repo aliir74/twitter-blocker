@@ -41,27 +41,27 @@ describe("LiveFeedPanel", () => {
       username: "user1",
       text: "This is a safe reply",
       status: "safe",
-      result: { isHate: false, confidence: 10, reason: "Normal content" },
+      result: { isMatch: false, confidence: 10, reason: "Normal content" },
     },
     {
       element: document.createElement("div"),
       username: "user2",
       text: "This is hate speech",
-      status: "hate",
-      result: { isHate: true, confidence: 95, reason: "Contains slur" },
+      status: "flagged",
+      result: { isMatch: true, confidence: 95, reason: "Contains slur" },
     },
     {
       element: document.createElement("div"),
       username: "user3",
       text: "Blocked user",
       status: "blocked",
-      result: { isHate: true, confidence: 88, reason: "Threat detected" },
+      result: { isMatch: true, confidence: 88, reason: "Threat detected" },
     },
   ];
 
   it("should not render when no replies and not scanning", () => {
     const { container } = render(
-      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
     expect(container.firstChild).toBeNull();
@@ -69,10 +69,10 @@ describe("LiveFeedPanel", () => {
 
   it("should render panel with replies", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
-    expect(screen.getByText("Scan Results")).toBeInTheDocument();
+    expect(screen.getByText("Scan Results (Hate Speech)")).toBeInTheDocument();
     expect(screen.getByText("@user1")).toBeInTheDocument();
     expect(screen.getByText("@user2")).toBeInTheDocument();
     expect(screen.getByText("@user3")).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe("LiveFeedPanel", () => {
 
   it("should display correct stats", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
     expect(screen.getByText("Analyzed: 3/3")).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe("LiveFeedPanel", () => {
   it("should call onClose when close button clicked", () => {
     const handleClose = vi.fn();
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} blockingMode="hate" />
     );
 
     const closeButton = screen.getByRole("button");
@@ -102,7 +102,7 @@ describe("LiveFeedPanel", () => {
 
   it("should show status badges correctly", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
     expect(screen.getByText(/Safe/)).toBeInTheDocument();
@@ -112,7 +112,7 @@ describe("LiveFeedPanel", () => {
 
   it("should show reason for hate content", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
     expect(screen.getByText("Contains slur")).toBeInTheDocument();
@@ -125,14 +125,24 @@ describe("LiveFeedPanel", () => {
       username: "longuser",
       text: "A".repeat(150),
       status: "safe",
-      result: { isHate: false, confidence: 5, reason: "Safe" },
+      result: { isMatch: false, confidence: 5, reason: "Safe" },
     };
 
     render(
-      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} />
+      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} blockingMode="hate" />
     );
 
     const truncatedText = screen.getByText(/A{100}\.\.\./);
     expect(truncatedText).toBeInTheDocument();
+  });
+
+  it("should show cult praise labels when in cultPraise mode", () => {
+    render(
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="cultPraise" />
+    );
+
+    expect(screen.getByText("Scan Results (Cult Praise)")).toBeInTheDocument();
+    expect(screen.getByText("Cult: 2")).toBeInTheDocument();
+    expect(screen.getByText(/Cult \(95%\)/)).toBeInTheDocument();
   });
 });

@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Twitter Hate Blocker is a Chrome extension that scans replies on Twitter/X, detects hate speech using OpenRouter AI, and automatically blocks offending users by simulating UI clicks.
+Twitter Hate Blocker is a Chrome extension that scans replies on Twitter/X, detects problematic content using OpenRouter AI, and automatically blocks offending users by simulating UI clicks.
+
+### Blocking Modes
+
+The extension supports two mutually exclusive blocking modes (user selects one):
+
+1. **Hate Speech** (default) - Detects direct hatred, slurs, harassment, and offensive language targeting individuals or groups. Does not flag political opinions or disagreements.
+
+2. **Cult Praise** - Detects abnormally sycophantic, cult-like devotion including worship-like adoration, blind obedience language, and extreme tribalism. Does not flag normal positive engagement or fan enthusiasm.
 
 ## Commands
 
@@ -51,10 +59,10 @@ pnpm vitest run tests/storage.test.ts
 ```
 Content Script → Background Worker → OpenRouter API
      ↓                    ↓
-  Twitter DOM         Returns: {isHate, confidence, reason}
+  Twitter DOM         Returns: {isMatch, confidence, reason}
 ```
 
-The content script extracts reply text from Twitter DOM, sends it to the background worker, which calls OpenRouter for classification. Results flow back to update the UI and trigger blocking if confidence exceeds threshold.
+The content script extracts reply text from Twitter DOM, sends it to the background worker, which calls OpenRouter for classification based on the selected blocking mode. Results flow back to update the UI and trigger blocking if confidence exceeds threshold.
 
 ### Auto-Scroll Feature
 
@@ -64,6 +72,8 @@ The extension supports auto-scrolling to collect lazy-loaded replies:
 2. **Analysis Phase**: Processes collected replies sequentially through the AI classifier.
 
 Key settings:
+- `blockingMode` ("hate" | "cultPraise", default: "hate") - Select which type of content to detect and block
+- `dryRun` (boolean, default: false) - Analyze only without actually blocking users
 - `autoScroll` (boolean, default: true) - Enable/disable auto-scroll
 - `maxScrollAttemptsWithoutNewContent` (number, default: 3) - Stop scrolling after N attempts with no new replies
 

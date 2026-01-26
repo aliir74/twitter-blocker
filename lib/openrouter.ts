@@ -1,11 +1,13 @@
+import type { BlockingMode } from "./storage";
+
 export interface AnalysisResult {
-  isHate: boolean;
+  isMatch: boolean;
   confidence: number;
   reason: string;
   error?: string;
 }
 
-const SYSTEM_PROMPT = `You are a hate speech classifier. Analyze the given text and determine if it contains direct hatred or offensive language targeting individuals or groups.
+const HATE_SPEECH_PROMPT = `You are a hate speech classifier. Analyze the given text and determine if it contains direct hatred or offensive language targeting individuals or groups.
 
 IMPORTANT: Do NOT flag content based on political views, opinions, or political direction. Only flag content that contains:
 - Direct hatred, slurs, or dehumanizing language targeting people based on identity (race, religion, gender, sexuality, disability, etc.)
@@ -15,19 +17,56 @@ IMPORTANT: Do NOT flag content based on political views, opinions, or political 
 Political disagreement, criticism of ideas/policies, or strong opinions are NOT hate speech.
 
 Respond ONLY with valid JSON in this exact format:
-{"isHate": boolean, "confidence": number, "reason": "brief explanation"}
+{"isMatch": boolean, "confidence": number, "reason": "brief explanation"}
 
 Where:
-- isHate: true ONLY if the text contains direct hatred, offensive slurs, or harassment (not political opinions)
+- isMatch: true ONLY if the text contains direct hatred, offensive slurs, or harassment (not political opinions)
 - confidence: a number from 0-100 indicating your confidence in the classification
 - reason: a brief (under 20 words) explanation of your classification`;
+
+const CULT_PRAISE_PROMPT = `You are a cult-like praise detector. Analyze the given text and determine if it contains abnormally sycophantic, cult-like POSITIVE devotion toward the original tweet's author.
+
+CRITICAL RULES - READ CAREFULLY:
+
+1. ONLY flag GENUINE, SINCERE worship-like POSITIVE praise. Nothing else.
+
+2. NEVER flag these (return isMatch: false):
+   - Sarcasm, irony, or mockery (even if words sound positive)
+   - Rhetorical questions (these are usually criticism)
+   - Criticism, accusations, or negative comments
+   - Political disagreement or opposition
+   - Attacks or insults against someone
+   - Neutral or factual statements
+   - Normal support, admiration, or gratitude
+   - Anything that could be interpreted as negative
+
+3. For NON-ENGLISH text: Be extra cautious. If you're uncertain about sentiment in another language, default to isMatch: false. Sarcasm often doesn't translate well.
+
+4. ONLY flag when you are 100% certain the text is:
+   - Worship-like adoration treating them as infallible or divine
+   - Blind obedience ("I'll follow you anywhere", "you can never be wrong")
+   - Messiah-like elevation ("you are the savior", "only you can save us")
+   - Extreme sycophancy ("everything you say is perfect", "genius beyond compare")
+
+5. When in doubt, return isMatch: false. False negatives are acceptable; false positives are not.
+
+Respond ONLY with valid JSON:
+{"isMatch": boolean, "confidence": number, "reason": "brief explanation"}
+
+Where:
+- isMatch: true ONLY for genuine worship-like praise (never for sarcasm, criticism, or uncertain cases)
+- confidence: 0-100 (use high confidence only when absolutely certain)
+- reason: brief (under 20 words) explanation`;
 
 export async function analyzeReply(
   text: string,
   apiKey: string,
-  model: string
+  model: string,
+  blockingMode: BlockingMode = "hate"
 ): Promise<AnalysisResult> {
   try {
+    const systemPrompt = blockingMode === "hate" ? HATE_SPEECH_PROMPT : CULT_PRAISE_PROMPT;
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -39,7 +78,7 @@ export async function analyzeReply(
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           { role: "user", content: text },
         ],
         temperature: 0.1,
@@ -50,7 +89,7 @@ export async function analyzeReply(
     if (!response.ok) {
       const errorText = await response.text();
       return {
-        isHate: false,
+        isMatch: false,
         confidence: 0,
         reason: "API error",
         error: `HTTP ${response.status}: ${errorText}`,
@@ -64,7 +103,7 @@ export async function analyzeReply(
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return {
-        isHate: false,
+        isMatch: false,
         confidence: 0,
         reason: "Invalid response format",
         error: "Could not parse JSON from response",
@@ -73,13 +112,13 @@ export async function analyzeReply(
 
     const parsed = JSON.parse(jsonMatch[0]);
     return {
-      isHate: Boolean(parsed.isHate),
+      isMatch: Boolean(parsed.isMatch),
       confidence: Number(parsed.confidence) || 0,
       reason: String(parsed.reason) || "No reason provided",
     };
   } catch (error) {
     return {
-      isHate: false,
+      isMatch: false,
       confidence: 0,
       reason: "Request failed",
       error: error instanceof Error ? error.message : "Unknown error",

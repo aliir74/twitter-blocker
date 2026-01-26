@@ -8,9 +8,11 @@ describe("storage", () => {
       expect(DEFAULT_SETTINGS.apiKey).toBe("");
       expect(DEFAULT_SETTINGS.model).toBe("google/gemma-2-9b-it");
       expect(DEFAULT_SETTINGS.maxReplies).toBe(50);
-      expect(DEFAULT_SETTINGS.confidenceThreshold).toBe(80);
+      expect(DEFAULT_SETTINGS.confidenceThreshold).toBe(90);
       expect(DEFAULT_SETTINGS.autoScroll).toBe(true);
       expect(DEFAULT_SETTINGS.maxScrollAttemptsWithoutNewContent).toBe(3);
+      expect(DEFAULT_SETTINGS.blockingMode).toBe("hate");
+      expect(DEFAULT_SETTINGS.dryRun).toBe(false);
     });
   });
 
@@ -59,6 +61,8 @@ describe("storage", () => {
         confidenceThreshold: 90,
         autoScroll: true,
         maxScrollAttemptsWithoutNewContent: 3,
+        blockingMode: "hate" as const,
+        dryRun: false,
       };
 
       await saveSettings(newSettings);
@@ -98,6 +102,36 @@ describe("storage", () => {
       expect(settings.autoScroll).toBe(false);
       expect(settings.maxScrollAttemptsWithoutNewContent).toBe(7);
       expect(settings.apiKey).toBe(DEFAULT_SETTINGS.apiKey);
+    });
+  });
+
+  describe("getSettings with blockingMode", () => {
+    it("should return default blockingMode when none saved", async () => {
+      const settings = await getSettings();
+      expect(settings.blockingMode).toBe("hate");
+    });
+
+    it("should return saved blockingMode", async () => {
+      mockStorage["settings"] = { blockingMode: "cultPraise" };
+
+      const settings = await getSettings();
+
+      expect(settings.blockingMode).toBe("cultPraise");
+    });
+  });
+
+  describe("getSettings with dryRun", () => {
+    it("should return default dryRun when none saved", async () => {
+      const settings = await getSettings();
+      expect(settings.dryRun).toBe(false);
+    });
+
+    it("should return saved dryRun", async () => {
+      mockStorage["settings"] = { dryRun: true };
+
+      const settings = await getSettings();
+
+      expect(settings.dryRun).toBe(true);
     });
   });
 });

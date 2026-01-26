@@ -30,6 +30,20 @@
   cursor: not-allowed;
 }
 
+.thb-floating-button.thb-dry-run {
+  background: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.thb-floating-button.thb-dry-run:hover:not(:disabled) {
+  background: #d97706;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+
+.thb-floating-button.thb-dry-run:disabled {
+  background: #92400e;
+}
+
 .thb-spinner {
   width: 16px;
   height: 16px;
@@ -103,7 +117,7 @@
   color: #999;
 }
 
-.thb-hate-count {
+.thb-flagged-count {
   color: #ef4444;
 }
 
@@ -138,7 +152,7 @@
   border-left-color: #22c55e;
 }
 
-.thb-reply-hate {
+.thb-reply-flagged {
   border-left-color: #ef4444;
 }
 
@@ -202,7 +216,7 @@
   color: #22c55e;
 }
 
-.thb-badge-hate {
+.thb-badge-flagged {
   background: #ef444420;
   color: #ef4444;
 }
