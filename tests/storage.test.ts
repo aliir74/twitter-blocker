@@ -6,21 +6,22 @@ describe("storage", () => {
   describe("DEFAULT_SETTINGS", () => {
     it("should have correct default values", () => {
       expect(DEFAULT_SETTINGS.apiKey).toBe("");
-      expect(DEFAULT_SETTINGS.model).toBe("google/gemma-2-9b-it");
+      expect(DEFAULT_SETTINGS.model).toBe("google/gemma-3-12b-it");
       expect(DEFAULT_SETTINGS.maxReplies).toBe(50);
       expect(DEFAULT_SETTINGS.confidenceThreshold).toBe(90);
       expect(DEFAULT_SETTINGS.autoScroll).toBe(true);
       expect(DEFAULT_SETTINGS.maxScrollAttemptsWithoutNewContent).toBe(3);
       expect(DEFAULT_SETTINGS.blockingMode).toBe("hate");
+      expect(DEFAULT_SETTINGS.actionMode).toBe("block");
       expect(DEFAULT_SETTINGS.dryRun).toBe(false);
     });
   });
 
   describe("AVAILABLE_MODELS", () => {
     it("should include default model", () => {
-      const defaultModel = AVAILABLE_MODELS.find((m) => m.id === "google/gemma-2-9b-it");
+      const defaultModel = AVAILABLE_MODELS.find((m) => m.id === "google/gemma-3-12b-it");
       expect(defaultModel).toBeDefined();
-      expect(defaultModel?.name).toContain("Default");
+      expect(defaultModel?.name).toContain("Persian");
     });
 
     it("should have at least 3 models", () => {
@@ -62,6 +63,7 @@ describe("storage", () => {
         autoScroll: true,
         maxScrollAttemptsWithoutNewContent: 3,
         blockingMode: "hate" as const,
+        actionMode: "block" as const,
         dryRun: false,
       };
 
@@ -140,6 +142,29 @@ describe("storage", () => {
       const settings = await getSettings();
 
       expect(settings.dryRun).toBe(true);
+    });
+  });
+
+  describe("getSettings with actionMode", () => {
+    it("should return default actionMode when none saved", async () => {
+      const settings = await getSettings();
+      expect(settings.actionMode).toBe("block");
+    });
+
+    it("should return saved actionMode report", async () => {
+      mockStorage["settings"] = { actionMode: "report" };
+
+      const settings = await getSettings();
+
+      expect(settings.actionMode).toBe("report");
+    });
+
+    it("should return saved actionMode both", async () => {
+      mockStorage["settings"] = { actionMode: "both" };
+
+      const settings = await getSettings();
+
+      expect(settings.actionMode).toBe("both");
     });
   });
 });

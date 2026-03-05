@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Twitter Hate Blocker is a Chrome extension that scans replies on Twitter/X, detects problematic content using OpenRouter AI, and automatically blocks offending users by simulating UI clicks.
+Twitter Hate Blocker is a Chrome extension that scans replies on Twitter/X, detects problematic content using OpenRouter AI, and automatically blocks, reports, or both blocks and reports offending users by simulating UI clicks.
 
 ### Blocking Modes
 
 The extension supports three mutually exclusive blocking modes (user selects one):
 
-1. **Hate Speech** (default) - Detects direct hatred, slurs, harassment, and offensive language targeting individuals or groups. Does not flag political opinions or disagreements.
+1. **Hate Speech** (default) - Detects direct hatred, slurs, harassment, and offensive language targeting the tweet's author specifically. Does not flag political opinions, disagreements, or hate directed at third parties/groups.
 
 2. **Cult Praise** - Detects abnormally sycophantic, cult-like devotion including worship-like adoration, blind obedience language, and extreme tribalism. Does not flag normal positive engagement or fan enthusiasm.
 
@@ -72,7 +72,7 @@ Content Script → Background Worker → OpenRouter API
   Twitter DOM         Returns: {isMatch, confidence, reason}
 ```
 
-The content script extracts reply text from Twitter DOM, sends it to the background worker, which calls OpenRouter for classification based on the selected blocking mode. Results flow back to update the UI and trigger blocking if confidence exceeds threshold.
+The content script extracts reply text from Twitter DOM, sends it to the background worker, which calls OpenRouter for classification based on the selected blocking mode. Results flow back to update the UI and trigger the configured action (block, report, or both) if confidence exceeds threshold.
 
 ### Auto-Scroll Feature
 
@@ -83,7 +83,8 @@ The extension supports auto-scrolling to collect lazy-loaded replies:
 
 Key settings:
 - `blockingMode` ("hate" | "cultPraise" | "blockAll", default: "hate") - Select which type of content to detect and block
-- `dryRun` (boolean, default: false) - Analyze only without actually blocking users
+- `actionMode` ("block" | "report" | "both", default: "block") - Select the action to take on flagged accounts (block, report for hateful content, or both)
+- `dryRun` (boolean, default: false) - Analyze only without actually taking action on users
 - `autoScroll` (boolean, default: true) - Enable/disable auto-scroll
 - `maxScrollAttemptsWithoutNewContent` (number, default: 3) - Stop scrolling after N attempts with no new replies
 
@@ -96,6 +97,9 @@ Key settings:
 | Username | `[data-testid="User-Name"] a[href^="/"]` |
 | More button | `[data-testid="caret"]` |
 | Block confirm | `[data-testid="confirmationSheetConfirm"]` |
+| Report flow done | `[data-testid="reportFlowDoneButton"]` |
+| Report flow next | `[data-testid="reportFlowNextButton"]` |
+| Choice next | `[data-testid="choiceSelectionNextButton"]` |
 
 ## Testing
 

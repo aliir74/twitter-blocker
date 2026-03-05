@@ -61,7 +61,7 @@ describe("LiveFeedPanel", () => {
 
   it("should not render when no replies and not scanning", () => {
     const { container } = render(
-      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     expect(container.firstChild).toBeNull();
@@ -69,7 +69,7 @@ describe("LiveFeedPanel", () => {
 
   it("should render panel with replies", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     expect(screen.getByText("Scan Results (Hate Speech)")).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe("LiveFeedPanel", () => {
 
   it("should display correct stats", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     expect(screen.getByText("Analyzed: 3/3")).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe("LiveFeedPanel", () => {
   it("should call onClose when close button clicked", () => {
     const handleClose = vi.fn();
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} blockingMode="hate" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} blockingMode="hate" actionMode="block" />
     );
 
     const closeButton = screen.getByRole("button");
@@ -102,7 +102,7 @@ describe("LiveFeedPanel", () => {
 
   it("should show status badges correctly", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     expect(screen.getByText(/Safe/)).toBeInTheDocument();
@@ -112,7 +112,7 @@ describe("LiveFeedPanel", () => {
 
   it("should show reason for hate content", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     expect(screen.getByText("Contains slur")).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe("LiveFeedPanel", () => {
     };
 
     render(
-      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} blockingMode="hate" />
+      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
     );
 
     const truncatedText = screen.getByText(/A{100}\.\.\./);
@@ -138,11 +138,50 @@ describe("LiveFeedPanel", () => {
 
   it("should show cult praise labels when in cultPraise mode", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="cultPraise" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="cultPraise" actionMode="block" />
     );
 
     expect(screen.getByText("Scan Results (Cult Praise)")).toBeInTheDocument();
     expect(screen.getByText("Cult: 2")).toBeInTheDocument();
     expect(screen.getByText(/Cult \(95%\)/)).toBeInTheDocument();
+  });
+
+  it("should show reported status badge", () => {
+    const reportedReplies: ReplyData[] = [
+      {
+        element: document.createElement("div"),
+        username: "reported_user",
+        text: "Some hateful content",
+        status: "reported",
+        result: { isMatch: true, confidence: 92, reason: "Hateful content" },
+      },
+    ];
+
+    render(
+      <LiveFeedPanel replies={reportedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="report" />
+    );
+
+    expect(screen.getByText("Reported")).toBeInTheDocument();
+    expect(screen.getByText("Reported: 1")).toBeInTheDocument();
+  });
+
+  it("should show actioned status badge", () => {
+    const actionedReplies: ReplyData[] = [
+      {
+        element: document.createElement("div"),
+        username: "actioned_user",
+        text: "Some hateful content",
+        status: "actioned",
+        result: { isMatch: true, confidence: 95, reason: "Hateful content" },
+      },
+    ];
+
+    render(
+      <LiveFeedPanel replies={actionedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="both" />
+    );
+
+    expect(screen.getByText("Blocked & Reported")).toBeInTheDocument();
+    expect(screen.getByText("Blocked: 1")).toBeInTheDocument();
+    expect(screen.getByText("Reported: 1")).toBeInTheDocument();
   });
 });

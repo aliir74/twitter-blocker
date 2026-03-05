@@ -4,6 +4,24 @@ export function getReplyKey(username: string, text: string): string {
   return `@${username}:${textSnippet}`;
 }
 
+// Extract the main tweet author's username.
+// Primary: parse from URL (/username/status/id).
+// Fallback: extract from the first cell's DOM.
+export function getMainTweetAuthor(firstCell?: Element | null): string | null {
+  // Try URL first (most reliable on actual Twitter pages)
+  const urlMatch = window.location.pathname.match(/^\/([^/]+)\/status\//);
+  if (urlMatch) return urlMatch[1];
+
+  // Fallback: extract from first cellInnerDiv
+  if (firstCell) {
+    const tweet = firstCell.querySelector('[data-testid="tweet"]');
+    const userEl = tweet?.querySelector('[data-testid="User-Name"] a[href^="/"]');
+    return userEl?.getAttribute("href")?.replace("/", "") || null;
+  }
+
+  return null;
+}
+
 // Get only NEW replies from DOM that aren't in the processed set
 export function getNewRepliesFromDOM(
   processedKeys: Set<string>,
@@ -12,6 +30,11 @@ export function getNewRepliesFromDOM(
 ): Array<{ element: HTMLElement; username: string; text: string }> {
   const newReplies: Array<{ element: HTMLElement; username: string; text: string }> = [];
   const cells = document.querySelectorAll('[data-testid="cellInnerDiv"]');
+
+  // Extract the main tweet author's username to exclude their replies.
+  // Primary: parse from URL (/username/status/id) which is most reliable.
+  // Fallback: extract from the first cellInnerDiv in the DOM.
+  const mainAuthorUsername = getMainTweetAuthor(cells[0]);
 
   for (const cell of cells) {
     if (currentCount + newReplies.length >= maxReplies) break;
@@ -28,6 +51,9 @@ export function getNewRepliesFromDOM(
     if (!tweetText || !userNameEl) continue;
 
     const username = userNameEl.getAttribute("href")?.replace("/", "") || "unknown";
+
+    // Skip replies from the main tweet author
+    if (mainAuthorUsername && username === mainAuthorUsername) continue;
     const text = tweetText.textContent || "";
 
     if (!text.trim()) continue;

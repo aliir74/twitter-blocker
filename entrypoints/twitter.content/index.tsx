@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client";
 import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
-import type { Settings, BlockingMode } from "@/lib/storage";
+import type { Settings, BlockingMode, ActionMode } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/openrouter";
 import { getNewRepliesFromDOM, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
 import "../../assets/theme.css";
@@ -11,7 +11,7 @@ export interface ReplyData {
   element: HTMLElement;
   username: string;
   text: string;
-  status: "pending" | "analyzing" | "safe" | "flagged" | "blocked" | "error";
+  status: "pending" | "analyzing" | "safe" | "flagged" | "blocked" | "reported" | "actioned" | "error";
   result?: AnalysisResult;
 }
 
@@ -48,6 +48,7 @@ export default defineContentScript({
           isScanning={isScanning}
           dryRun={currentSettings?.dryRun}
           blockingMode={currentSettings?.blockingMode}
+          actionMode={currentSettings?.actionMode}
         />
       );
     }
@@ -59,6 +60,7 @@ export default defineContentScript({
           isScanning={isScanning}
           onClose={stopScan}
           blockingMode={currentSettings?.blockingMode ?? "hate"}
+          actionMode={currentSettings?.actionMode ?? "block"}
         />
       );
     }
@@ -76,10 +78,11 @@ export default defineContentScript({
 
       // Block All mode confirmation
       if (settings.blockingMode === "blockAll") {
-        const dryRunText = settings.dryRun ? " (Dry Run - no actual blocks)" : "";
+        const actionText = settings.actionMode === "report" ? "REPORT" : settings.actionMode === "both" ? "BLOCK AND REPORT" : "BLOCK";
+        const dryRunText = settings.dryRun ? ` (Dry Run - no actual ${actionText.toLowerCase()}s)` : "";
         const confirmed = confirm(
           `WARNING: Block All mode is enabled${dryRunText}.\n\n` +
-          `This will ${settings.dryRun ? "identify" : "BLOCK"} EVERY account found on this page ` +
+          `This will ${settings.dryRun ? "identify" : actionText} EVERY account found on this page ` +
           `(up to ${settings.maxReplies} accounts).\n\n` +
           `Are you sure you want to continue?`
         );
@@ -164,14 +167,13 @@ export default defineContentScript({
           };
           renderPanel();
 
-          // Attempt to block (unless dry-run mode)
+          // Attempt action (unless dry-run mode)
           if (!settings.dryRun) {
-            const blocked = await blockUser(replies[i].element);
-            replies[i].status = blocked ? "blocked" : "flagged";
+            replies[i].status = await executeAction(replies[i].element, settings.actionMode);
           }
           renderPanel();
 
-          // Small delay between blocks
+          // Small delay between actions
           await sleep(300);
           continue;
         }
@@ -194,10 +196,9 @@ export default defineContentScript({
             replies[i].status = "flagged";
             renderPanel();
 
-            // Attempt to block (unless dry-run mode)
+            // Attempt action (unless dry-run mode)
             if (!settings.dryRun) {
-              const blocked = await blockUser(replies[i].element);
-              replies[i].status = blocked ? "blocked" : "flagged";
+              replies[i].status = await executeAction(replies[i].element, settings.actionMode);
             }
           } else {
             replies[i].status = "safe";
@@ -293,4 +294,183 @@ async function blockUser(replyElement: HTMLElement): Promise<boolean> {
     console.error("Error blocking user:", error);
     return false;
   }
+}
+
+async function dismissAllDialogs(): Promise<void> {
+  // Try clicking known dismiss buttons
+  const dismissSelectors = [
+    "[data-testid=\"reportFlowDoneButton\"]",
+    "[data-testid=\"app-bar-close\"]",
+    "[aria-label=\"Close\"]",
+  ];
+  for (const sel of dismissSelectors) {
+    const btn = document.querySelector(sel) as HTMLElement;
+    if (btn) {
+      btn.click();
+      await sleep(300);
+      return;
+    }
+  }
+
+  // Fallback: click body to dismiss any remaining overlays/menus
+  document.body.click();
+  await sleep(300);
+
+  // Wait for dialogs to be removed from DOM
+  const maxWait = 5;
+  for (let i = 0; i < maxWait; i++) {
+    const dialog = document.querySelector("[role=\"dialog\"]");
+    if (!dialog) return;
+    await sleep(200);
+  }
+}
+
+async function reportUser(replyElement: HTMLElement): Promise<boolean> {
+  try {
+    // Find and click the "More" button (3-dot menu)
+    const moreButton = replyElement.querySelector('[data-testid="caret"]') as HTMLElement;
+    if (!moreButton) {
+      console.log("More button not found");
+      return false;
+    }
+
+    moreButton.click();
+    await sleep(500);
+
+    // Find the report option in dropdown
+    const menuItems = document.querySelectorAll('[role="menuitem"]');
+    let reportItem: HTMLElement | null = null;
+
+    for (const item of menuItems) {
+      if (item.textContent?.toLowerCase().includes("report")) {
+        reportItem = item as HTMLElement;
+        break;
+      }
+    }
+
+    if (!reportItem) {
+      console.log("Report option not found in menu");
+      document.body.click();
+      return false;
+    }
+
+    reportItem.click();
+    await sleep(800);
+
+    // Find and click the hateful content reason using cascading selectors
+    const reasonSelectors = ["[role=\"radio\"]", "[role=\"option\"]", "[role=\"dialog\"] span"];
+    const reasonKeywords = ["hate", "hateful", "abusive", "harassment"];
+    let reasonClicked = false;
+
+    for (const selector of reasonSelectors) {
+      if (reasonClicked) break;
+      const elements = document.querySelectorAll(selector);
+      for (const el of elements) {
+        const text = el.textContent?.toLowerCase() ?? "";
+        if (reasonKeywords.some((keyword) => text.includes(keyword))) {
+          (el as HTMLElement).click();
+          reasonClicked = true;
+          break;
+        }
+      }
+    }
+
+    if (!reasonClicked) {
+      console.log("Report reason not found, clicking first available option");
+      const firstOption = document.querySelector('[role="radio"], [role="option"]') as HTMLElement;
+      if (firstOption) {
+        firstOption.click();
+      }
+    }
+
+    await sleep(500);
+
+    // Click Next/Submit button
+    const submitSelectors = [
+      '[data-testid="choiceSelectionNextButton"]',
+      '[data-testid="reportFlowNextButton"]',
+      '[data-testid="confirmationSheetConfirm"]',
+    ];
+
+    let submitted = false;
+    for (const sel of submitSelectors) {
+      const btn = document.querySelector(sel) as HTMLElement;
+      if (btn) {
+        btn.click();
+        submitted = true;
+        break;
+      }
+    }
+
+    // Fallback: find button by text
+    if (!submitted) {
+      const buttons = document.querySelectorAll("button, [role='button']");
+      for (const btn of buttons) {
+        const text = btn.textContent?.toLowerCase() ?? "";
+        if (text.includes("next") || text.includes("submit")) {
+          (btn as HTMLElement).click();
+          submitted = true;
+          break;
+        }
+      }
+    }
+
+    if (!submitted) {
+      console.log("Submit button not found in report wizard");
+      await dismissAllDialogs();
+      return false;
+    }
+
+    await sleep(800);
+
+    // Handle optional second confirmation step
+    for (const sel of submitSelectors) {
+      const btn = document.querySelector(sel) as HTMLElement;
+      if (btn) {
+        btn.click();
+        break;
+      }
+    }
+
+    await sleep(300);
+
+    // Dismiss any remaining dialogs
+    const doneButton = document.querySelector('[data-testid="reportFlowDoneButton"]') as HTMLElement;
+    if (doneButton) {
+      doneButton.click();
+      await sleep(300);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error reporting user:", error);
+    await dismissAllDialogs();
+    return false;
+  }
+}
+
+async function executeAction(
+  replyElement: HTMLElement,
+  actionMode: ActionMode
+): Promise<ReplyData["status"]> {
+  if (actionMode === "report") {
+    const reported = await reportUser(replyElement);
+    return reported ? "reported" : "flagged";
+  }
+
+  if (actionMode === "both") {
+    // Report first since blocking may prevent further interaction
+    const reported = await reportUser(replyElement);
+    await dismissAllDialogs();
+    await sleep(500);
+    const blocked = await blockUser(replyElement);
+    if (reported && blocked) return "actioned";
+    if (blocked) return "blocked";
+    if (reported) return "reported";
+    return "flagged";
+  }
+
+  // Default: block only
+  const blocked = await blockUser(replyElement);
+  return blocked ? "blocked" : "flagged";
 }

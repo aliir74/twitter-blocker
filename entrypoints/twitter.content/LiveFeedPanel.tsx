@@ -1,14 +1,15 @@
 import type { ReplyData } from "./index";
-import type { BlockingMode } from "@/lib/storage";
+import type { BlockingMode, ActionMode } from "@/lib/storage";
 
 interface LiveFeedPanelProps {
   replies: ReplyData[];
   isScanning: boolean;
   onClose: () => void;
   blockingMode: BlockingMode;
+  actionMode: ActionMode;
 }
 
-export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: LiveFeedPanelProps) {
+export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode, actionMode }: LiveFeedPanelProps) {
   if (replies.length === 0 && !isScanning) {
     return null;
   }
@@ -16,8 +17,9 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
   const stats = {
     total: replies.length,
     analyzed: replies.filter((r) => r.status !== "pending" && r.status !== "analyzing").length,
-    flagged: replies.filter((r) => r.status === "flagged" || r.status === "blocked").length,
-    blocked: replies.filter((r) => r.status === "blocked").length,
+    flagged: replies.filter((r) => r.status === "flagged" || r.status === "blocked" || r.status === "reported" || r.status === "actioned").length,
+    blocked: replies.filter((r) => r.status === "blocked" || r.status === "actioned").length,
+    reported: replies.filter((r) => r.status === "reported" || r.status === "actioned").length,
   };
 
   const flaggedLabel = blockingMode === "hate" ? "Hate" : blockingMode === "cultPraise" ? "Cult" : "Queued";
@@ -37,7 +39,12 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
       <div className="thb-stats">
         <span>Analyzed: {stats.analyzed}/{stats.total}</span>
         <span className="thb-flagged-count">{flaggedLabel}: {stats.flagged}</span>
-        <span className="thb-blocked-count">Blocked: {stats.blocked}</span>
+        {actionMode !== "report" && (
+          <span className="thb-blocked-count">Blocked: {stats.blocked}</span>
+        )}
+        {actionMode !== "block" && (
+          <span className="thb-reported-count">Reported: {stats.reported}</span>
+        )}
       </div>
 
       <div className="thb-feed">
@@ -45,7 +52,7 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
           <div key={index} className={`thb-reply thb-reply-${reply.status}`}>
             <div className="thb-reply-header">
               <span className="thb-username">@{reply.username}</span>
-              <StatusBadge status={reply.status} confidence={reply.result?.confidence} blockingMode={blockingMode} />
+              <StatusBadge status={reply.status} confidence={reply.result?.confidence} blockingMode={blockingMode} actionMode={actionMode} />
             </div>
             <div className="thb-reply-text">
               {reply.text.length > 100 ? `${reply.text.slice(0, 100)}...` : reply.text}
@@ -60,7 +67,7 @@ export function LiveFeedPanel({ replies, isScanning, onClose, blockingMode }: Li
   );
 }
 
-function StatusBadge({ status, confidence, blockingMode }: { status: ReplyData["status"]; confidence?: number; blockingMode: BlockingMode }) {
+function StatusBadge({ status, confidence, blockingMode, actionMode }: { status: ReplyData["status"]; confidence?: number; blockingMode: BlockingMode; actionMode: ActionMode }) {
   const isBlockAll = blockingMode === "blockAll";
   const flaggedLabel = blockingMode === "hate" ? "Hate" : blockingMode === "cultPraise" ? "Cult" : "Queued";
 
@@ -73,6 +80,8 @@ function StatusBadge({ status, confidence, blockingMode }: { status: ReplyData["
     safe: { label: `Safe${showConfidence ? ` (${confidence}%)` : ""}`, className: "thb-badge-safe" },
     flagged: { label: `${flaggedLabel}${showConfidence ? ` (${confidence}%)` : ""}`, className: "thb-badge-flagged" },
     blocked: { label: "Blocked", className: "thb-badge-blocked" },
+    reported: { label: "Reported", className: "thb-badge-reported" },
+    actioned: { label: "Blocked & Reported", className: "thb-badge-actioned" },
     error: { label: "Error", className: "thb-badge-error" },
   };
 

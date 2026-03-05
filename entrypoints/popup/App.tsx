@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSettings, saveSettings, type Settings, type BlockingMode, AVAILABLE_MODELS, DEFAULT_SETTINGS } from "@/lib/storage";
+import { getSettings, saveSettings, type Settings, type BlockingMode, type ActionMode, AVAILABLE_MODELS, DEFAULT_SETTINGS } from "@/lib/storage";
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -59,6 +59,45 @@ export default function App() {
             />
             <span className="radio-text">Block All</span>
             <span className={`radio-hint ${settings.blockingMode === "blockAll" ? "radio-hint-warning" : ""}`}>Blocks EVERY account on the page - use with caution!</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Action Mode</label>
+        <div className="mode-selector">
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="actionMode"
+              value="block"
+              checked={settings.actionMode === "block"}
+              onChange={(e) => setSettings({ ...settings, actionMode: e.target.value as ActionMode })}
+            />
+            <span className="radio-text">Block Only</span>
+            <span className="radio-hint">Block flagged accounts</span>
+          </label>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="actionMode"
+              value="report"
+              checked={settings.actionMode === "report"}
+              onChange={(e) => setSettings({ ...settings, actionMode: e.target.value as ActionMode })}
+            />
+            <span className="radio-text">Report Only</span>
+            <span className="radio-hint">Report flagged accounts for hateful content</span>
+          </label>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="actionMode"
+              value="both"
+              checked={settings.actionMode === "both"}
+              onChange={(e) => setSettings({ ...settings, actionMode: e.target.value as ActionMode })}
+            />
+            <span className="radio-text">Block &amp; Report</span>
+            <span className="radio-hint">Report first, then block flagged accounts</span>
           </label>
         </div>
       </div>
@@ -153,7 +192,7 @@ export default function App() {
             checked={settings.dryRun}
             onChange={(e) => setSettings({ ...settings, dryRun: e.target.checked })}
           />
-          Dry-run mode (analyze only, don't block)
+          Dry-run mode (analyze only, don't {settings.actionMode === "report" ? "report" : settings.actionMode === "both" ? "block or report" : "block"})
         </label>
       </div>
 
