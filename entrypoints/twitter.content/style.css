@@ -10,71 +10,71 @@
   padding: 12px 20px;
   border: none;
   border-radius: 9999px;
-  background: #6366f1;
-  color: white;
+  background: var(--thb-accent);
+  color: var(--thb-text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px var(--thb-accent-shadow);
   transition: all 0.2s;
 }
 
 .thb-floating-button:hover:not(:disabled) {
-  background: #4f46e5;
+  background: var(--thb-accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 16px var(--thb-accent-shadow-hover);
 }
 
 .thb-floating-button:disabled {
-  background: #4b5563;
+  background: var(--thb-disabled);
   cursor: not-allowed;
 }
 
 .thb-floating-button.thb-dry-run {
-  background: #f59e0b;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  background: var(--thb-warning);
+  box-shadow: 0 4px 12px var(--thb-warning-shadow);
 }
 
 .thb-floating-button.thb-dry-run:hover:not(:disabled) {
-  background: #d97706;
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+  background: var(--thb-warning-hover);
+  box-shadow: 0 6px 16px var(--thb-warning-shadow-hover);
 }
 
 .thb-floating-button.thb-dry-run:disabled {
-  background: #92400e;
+  background: var(--thb-warning-dark);
 }
 
 /* Block All mode button */
 .thb-floating-button.thb-block-all {
-  background: #ef4444;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  background: var(--thb-danger);
+  box-shadow: 0 4px 12px var(--thb-danger-shadow);
 }
 
 .thb-floating-button.thb-block-all:hover:not(:disabled) {
-  background: #dc2626;
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+  background: var(--thb-danger-hover);
+  box-shadow: 0 6px 16px var(--thb-danger-shadow-hover);
 }
 
 .thb-floating-button.thb-block-all:disabled {
-  background: #991b1b;
+  background: var(--thb-danger-dark);
 }
 
 /* Block All with dry-run (warning color takes precedence) */
 .thb-floating-button.thb-block-all.thb-dry-run {
-  background: #f59e0b;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  background: var(--thb-warning);
+  box-shadow: 0 4px 12px var(--thb-warning-shadow);
 }
 
 .thb-floating-button.thb-block-all.thb-dry-run:hover:not(:disabled) {
-  background: #d97706;
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+  background: var(--thb-warning-hover);
+  box-shadow: 0 6px 16px var(--thb-warning-shadow-hover);
 }
 
 .thb-spinner {
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
-  border-top-color: white;
+  border-top-color: var(--thb-text-primary);
   border-radius: 50%;
   animation: thb-spin 0.8s linear infinite;
 }
@@ -93,9 +93,9 @@
   z-index: 9998;
   width: 380px;
   max-height: 500px;
-  background: #1a1a2e;
+  background: var(--thb-bg-primary);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px var(--thb-shadow-panel);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -106,13 +106,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--thb-border);
 }
 
 .thb-panel-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #fff;
+  color: var(--thb-text-primary);
 }
 
 .thb-close-btn {
@@ -124,31 +124,31 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #999;
+  color: var(--thb-text-muted);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .thb-close-btn:hover {
-  background: #333;
-  color: #fff;
+  background: var(--thb-bg-hover);
+  color: var(--thb-text-primary);
 }
 
 .thb-stats {
   display: flex;
   gap: 16px;
   padding: 12px 16px;
-  background: #252542;
+  background: var(--thb-bg-secondary);
   font-size: 13px;
-  color: #999;
+  color: var(--thb-text-muted);
 }
 
 .thb-flagged-count {
-  color: #ef4444;
+  color: var(--thb-danger);
 }
 
 .thb-blocked-count {
-  color: #22c55e;
+  color: var(--thb-success);
 }
 
 .thb-feed {
@@ -162,32 +162,32 @@
   padding: 12px;
   margin-bottom: 8px;
   border-radius: 8px;
-  background: #252542;
+  background: var(--thb-bg-secondary);
   border-left: 3px solid transparent;
 }
 
 .thb-reply-pending {
-  border-left-color: #666;
+  border-left-color: var(--thb-text-pending);
 }
 
 .thb-reply-analyzing {
-  border-left-color: #f59e0b;
+  border-left-color: var(--thb-warning);
 }
 
 .thb-reply-safe {
-  border-left-color: #22c55e;
+  border-left-color: var(--thb-success);
 }
 
 .thb-reply-flagged {
-  border-left-color: #ef4444;
+  border-left-color: var(--thb-danger);
 }
 
 .thb-reply-blocked {
-  border-left-color: #a855f7;
+  border-left-color: var(--thb-purple);
 }
 
 .thb-reply-error {
-  border-left-color: #ef4444;
+  border-left-color: var(--thb-danger);
   opacity: 0.7;
 }
 
@@ -201,21 +201,21 @@
 .thb-username {
   font-size: 13px;
   font-weight: 600;
-  color: #1d9bf0;
+  color: var(--thb-info);
 }
 
 .thb-reply-text {
   font-size: 13px;
-  color: #ccc;
+  color: var(--thb-text-secondary);
   line-height: 1.4;
 }
 
 .thb-reply-reason {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--thb-border);
   font-size: 12px;
-  color: #999;
+  color: var(--thb-text-muted);
   font-style: italic;
 }
 
@@ -228,31 +228,31 @@
 }
 
 .thb-badge-pending {
-  background: #374151;
-  color: #9ca3af;
+  background: var(--thb-badge-pending-bg);
+  color: var(--thb-badge-pending-text);
 }
 
 .thb-badge-analyzing {
-  background: #f59e0b20;
-  color: #f59e0b;
+  background: var(--thb-warning-bg);
+  color: var(--thb-warning);
 }
 
 .thb-badge-safe {
-  background: #22c55e20;
-  color: #22c55e;
+  background: var(--thb-success-bg);
+  color: var(--thb-success);
 }
 
 .thb-badge-flagged {
-  background: #ef444420;
-  color: #ef4444;
+  background: var(--thb-danger-bg);
+  color: var(--thb-danger);
 }
 
 .thb-badge-blocked {
-  background: #a855f720;
-  color: #a855f7;
+  background: var(--thb-purple-bg);
+  color: var(--thb-purple);
 }
 
 .thb-badge-error {
-  background: #ef444420;
-  color: #ef4444;
+  background: var(--thb-danger-bg);
+  color: var(--thb-danger);
 }
