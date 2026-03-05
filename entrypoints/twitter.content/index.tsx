@@ -250,6 +250,9 @@ export default defineContentScript({
 
 async function blockUser(replyElement: HTMLElement): Promise<boolean> {
   try {
+    // Dismiss any leftover dialogs/overlays from previous actions
+    await dismissAllDialogs();
+
     // Find and click the "More" button (3-dot menu)
     const moreButton = replyElement.querySelector('[data-testid="caret"]') as HTMLElement;
     if (!moreButton) {
@@ -329,6 +332,9 @@ async function dismissAllDialogs(): Promise<void> {
 
 async function reportUser(replyElement: HTMLElement): Promise<boolean> {
   try {
+    // Dismiss any leftover dialogs/overlays from previous actions
+    await dismissAllDialogs();
+
     // Find and click the "More" button (3-dot menu)
     const moreButton = replyElement.querySelector('[data-testid="caret"]') as HTMLElement;
     if (!moreButton) {
@@ -481,13 +487,23 @@ async function executeAction(
   actionMode: ActionMode
 ): Promise<ReplyData["status"]> {
   if (actionMode === "report") {
-    const reported = await reportUser(replyElement);
+    let reported = await reportUser(replyElement);
+    if (!reported) {
+      console.log("Report failed, retrying once...");
+      await sleep(500);
+      reported = await reportUser(replyElement);
+    }
     return reported ? "reported" : "flagged";
   }
 
   if (actionMode === "both") {
     // Report first since blocking may prevent further interaction
-    const reported = await reportUser(replyElement);
+    let reported = await reportUser(replyElement);
+    if (!reported) {
+      console.log("Report failed, retrying once...");
+      await sleep(500);
+      reported = await reportUser(replyElement);
+    }
     await dismissAllDialogs();
     await sleep(500);
     const blocked = await blockUser(replyElement);
