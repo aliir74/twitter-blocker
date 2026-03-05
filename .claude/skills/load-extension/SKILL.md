@@ -26,6 +26,8 @@ pnpm dev
 pnpm build
 ```
 
+**Note:** The WXT config has `runner.disabled: true` so `pnpm dev` will NOT auto-open a Chrome window. This is intentional — the user loads the extension manually into Dia Browser.
+
 Wait for the build to complete successfully. If it fails, debug and fix before proceeding.
 
 ## Step 3: Show Output Path

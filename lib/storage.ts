@@ -14,16 +14,20 @@ export interface Settings {
 }
 
 export const AVAILABLE_MODELS = [
-  { id: "google/gemma-2-9b-it", name: "Google Gemma 2 9B (Default)" },
-  { id: "openai/gpt-4o-mini", name: "OpenAI GPT-4o Mini" },
-  { id: "anthropic/claude-3-haiku", name: "Anthropic Claude 3 Haiku" },
-  { id: "meta-llama/llama-3-8b-instruct", name: "Meta Llama 3 8B" },
-  { id: "mistralai/mistral-7b-instruct", name: "Mistral 7B Instruct" },
+  { id: "google/gemma-3-12b-it", name: "Gemma 3 12B — $0.04/M (Best for Persian)" },
+  { id: "google/gemma-3-27b-it", name: "Gemma 3 27B — $0.04/M" },
+  { id: "qwen/qwen3-8b", name: "Qwen3 8B — $0.05/M" },
+  { id: "qwen/qwen3-14b", name: "Qwen3 14B — $0.06/M" },
+  { id: "google/gemini-2.0-flash-lite-001", name: "Gemini 2.0 Flash Lite — $0.075/M" },
+  { id: "openai/gpt-4.1-nano", name: "GPT-4.1 Nano — $0.10/M" },
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini — $0.15/M" },
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash — $0.30/M" },
+  { id: "anthropic/claude-haiku-4.5", name: "Claude Haiku 4.5 — $1.00/M" },
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey: "",
-  model: "google/gemma-2-9b-it",
+  model: "google/gemma-3-12b-it",
   maxReplies: 50,
   confidenceThreshold: 90,
   autoScroll: true,

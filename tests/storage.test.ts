@@ -6,7 +6,7 @@ describe("storage", () => {
   describe("DEFAULT_SETTINGS", () => {
     it("should have correct default values", () => {
       expect(DEFAULT_SETTINGS.apiKey).toBe("");
-      expect(DEFAULT_SETTINGS.model).toBe("google/gemma-2-9b-it");
+      expect(DEFAULT_SETTINGS.model).toBe("google/gemma-3-12b-it");
       expect(DEFAULT_SETTINGS.maxReplies).toBe(50);
       expect(DEFAULT_SETTINGS.confidenceThreshold).toBe(90);
       expect(DEFAULT_SETTINGS.autoScroll).toBe(true);
@@ -19,9 +19,9 @@ describe("storage", () => {
 
   describe("AVAILABLE_MODELS", () => {
     it("should include default model", () => {
-      const defaultModel = AVAILABLE_MODELS.find((m) => m.id === "google/gemma-2-9b-it");
+      const defaultModel = AVAILABLE_MODELS.find((m) => m.id === "google/gemma-3-12b-it");
       expect(defaultModel).toBeDefined();
-      expect(defaultModel?.name).toContain("Default");
+      expect(defaultModel?.name).toContain("Persian");
     });
 
     it("should have at least 3 models", () => {

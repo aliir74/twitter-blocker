@@ -2,6 +2,9 @@ import { defineConfig } from "wxt";
 
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
+  runner: {
+    disabled: true,
+  },
   manifest: {
     name: "Twitter Hate Blocker",
     description: "Detect and block hate speech in Twitter replies using AI",

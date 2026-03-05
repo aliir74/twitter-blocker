@@ -7,20 +7,23 @@ export interface AnalysisResult {
   error?: string;
 }
 
-const HATE_SPEECH_PROMPT = `You are a hate speech classifier. Analyze the given text and determine if it contains direct hatred or offensive language targeting individuals or groups.
+const HATE_SPEECH_PROMPT = `You are a hate speech classifier. You are analyzing a reply to someone's tweet. Determine if the reply contains direct hatred or offensive language targeting the tweet's author.
 
-IMPORTANT: Do NOT flag content based on political views, opinions, or political direction. Only flag content that contains:
-- Direct hatred, slurs, or dehumanizing language targeting people based on identity (race, religion, gender, sexuality, disability, etc.)
-- Personal harassment, threats of violence, or calls for harm
-- Severely offensive or vulgar attacks directed at specific individuals
+IMPORTANT: Only flag content directed AT THE TWEET'S AUTHOR. Do NOT flag:
+- Political views, opinions, or policy disagreements
+- Hatred or slurs directed at third parties, groups, or public figures other than the author
+- General offensive language not aimed at the author
 
-Political disagreement, criticism of ideas/policies, or strong opinions are NOT hate speech.
+Flag content that contains:
+- Direct hatred, slurs, or dehumanizing language aimed at the tweet's author
+- Personal harassment, threats of violence, or calls for harm against the author
+- Severely offensive or vulgar attacks directed at the author
 
 Respond ONLY with valid JSON in this exact format:
 {"isMatch": boolean, "confidence": number, "reason": "brief explanation"}
 
 Where:
-- isMatch: true ONLY if the text contains direct hatred, offensive slurs, or harassment (not political opinions)
+- isMatch: true ONLY if the reply contains direct hatred or harassment targeting the tweet's author
 - confidence: a number from 0-100 indicating your confidence in the classification
 - reason: a brief (under 20 words) explanation of your classification`;
 
