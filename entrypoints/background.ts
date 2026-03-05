@@ -16,7 +16,7 @@ export default defineBackground(() => {
           sendResponse({ error: "No API key configured" });
           return;
         }
-        const result = await analyzeReply(message.text, settings.apiKey, settings.model, settings.blockingMode);
+        const result = await analyzeReply(message.text, settings.apiKey, settings.model, settings.blockingMode, message.mainTweetText);
         sendResponse(result);
       });
       return true;
