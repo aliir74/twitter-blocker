@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getReplyKey, getNewRepliesFromDOM, waitForNewContent } from "../lib/dom-utils";
+import { getReplyKey, getNewRepliesFromDOM, getMainTweetAuthor, waitForNewContent } from "../lib/dom-utils";
 
 describe("dom-utils", () => {
   describe("getReplyKey", () => {
@@ -158,6 +158,59 @@ describe("dom-utils", () => {
       expect(processedKeys.has("@user1:Reply 1")).toBe(true);
     });
 
+    it("should skip replies from the main tweet author (URL-based)", () => {
+      // Mock Twitter tweet detail URL
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/mainuser/status/123456" },
+        writable: true,
+      });
+
+      const mainTweet = createMockTweet("mainuser", "Main tweet");
+      const authorReply = createMockTweet("mainuser", "Author replying to their own thread");
+      const otherReply = createMockTweet("otheruser", "Someone else replying");
+      document.body.appendChild(mainTweet);
+      document.body.appendChild(authorReply);
+      document.body.appendChild(otherReply);
+
+      const processedKeys = new Set<string>();
+      const replies = getNewRepliesFromDOM(processedKeys, 50, 0);
+
+      expect(replies).toHaveLength(1);
+      expect(replies[0].username).toBe("otheruser");
+
+      // Restore location
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/" },
+        writable: true,
+      });
+    });
+
+    it("should skip replies from the main tweet author (DOM fallback)", () => {
+      // Ensure URL doesn't match tweet pattern
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/search" },
+        writable: true,
+      });
+
+      const mainTweet = createMockTweet("mainuser", "Main tweet");
+      const authorReply = createMockTweet("mainuser", "Author replying");
+      const otherReply = createMockTweet("otheruser", "Someone else");
+      document.body.appendChild(mainTweet);
+      document.body.appendChild(authorReply);
+      document.body.appendChild(otherReply);
+
+      const processedKeys = new Set<string>();
+      const replies = getNewRepliesFromDOM(processedKeys, 50, 0);
+
+      expect(replies).toHaveLength(1);
+      expect(replies[0].username).toBe("otheruser");
+
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/" },
+        writable: true,
+      });
+    });
+
     it("should skip tweets with empty text", () => {
       const mainTweet = createMockTweet("mainuser", "Main tweet");
       const emptyReply = createMockTweet("user1", "   ");
@@ -171,6 +224,31 @@ describe("dom-utils", () => {
 
       expect(replies).toHaveLength(1);
       expect(replies[0].username).toBe("user2");
+    });
+  });
+
+  describe("getMainTweetAuthor", () => {
+    afterEach(() => {
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/" },
+        writable: true,
+      });
+    });
+
+    it("should extract username from tweet detail URL", () => {
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/elonmusk/status/123456789" },
+        writable: true,
+      });
+      expect(getMainTweetAuthor(null)).toBe("elonmusk");
+    });
+
+    it("should return null when URL is not a tweet page", () => {
+      Object.defineProperty(window, "location", {
+        value: { pathname: "/home" },
+        writable: true,
+      });
+      expect(getMainTweetAuthor(null)).toBe(null);
     });
   });
 
