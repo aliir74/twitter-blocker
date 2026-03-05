@@ -56,6 +56,14 @@ pnpm vitest run tests/storage.test.ts
 - `lib/openrouter.ts` - OpenRouter API client for hate speech classification
 - `lib/dom-utils.ts` - DOM utilities for Twitter reply extraction and auto-scroll
 
+### Theme System
+
+All colors are defined as CSS custom properties in `assets/theme.css` using the `--thb-` prefix (to avoid collisions with Twitter's CSS). Both entry points import this file before their local styles.
+
+Token categories: surfaces (`--thb-bg-*`), text (`--thb-text-*`), borders (`--thb-border`), accent (`--thb-accent-*`), and semantic colors for success/danger/warning/info/purple states.
+
+When adding new UI, use existing tokens from `assets/theme.css` instead of hardcoding hex values. Add new tokens there if needed.
+
 ### Message Flow
 
 ```

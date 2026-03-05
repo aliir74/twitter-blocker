@@ -4,6 +4,7 @@ import { LiveFeedPanel } from "./LiveFeedPanel";
 import type { Settings, BlockingMode } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/openrouter";
 import { getNewRepliesFromDOM, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
+import "../../assets/theme.css";
 import "./style.css";
 
 export interface ReplyData {

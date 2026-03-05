@@ -1,0 +1,62 @@
+:root {
+  /* Surfaces */
+  --thb-bg-primary: #1a1a2e;
+  --thb-bg-secondary: #252542;
+  --thb-bg-hover: #333;
+
+  /* Text */
+  --thb-text-primary: #fff;
+  --thb-text-base: #eee;
+  --thb-text-secondary: #ccc;
+  --thb-text-label: #aaa;
+  --thb-text-muted: #999;
+  --thb-text-hint: #888;
+  --thb-text-pending: #666;
+
+  /* Borders */
+  --thb-border: #333;
+
+  /* Accent */
+  --thb-accent: #6366f1;
+  --thb-accent-hover: #4f46e5;
+  --thb-accent-shadow: rgba(99, 102, 241, 0.4);
+  --thb-accent-shadow-hover: rgba(99, 102, 241, 0.5);
+  --thb-accent-bg: #6366f120;
+
+  /* Semantic — Success */
+  --thb-success: #22c55e;
+  --thb-success-bg: #22c55e20;
+
+  /* Semantic — Danger */
+  --thb-danger: #ef4444;
+  --thb-danger-hover: #dc2626;
+  --thb-danger-dark: #991b1b;
+  --thb-danger-bg: #ef444420;
+  --thb-danger-shadow: rgba(239, 68, 68, 0.4);
+  --thb-danger-shadow-hover: rgba(239, 68, 68, 0.5);
+
+  /* Semantic — Warning */
+  --thb-warning: #f59e0b;
+  --thb-warning-hover: #d97706;
+  --thb-warning-dark: #92400e;
+  --thb-warning-bg: #f59e0b20;
+  --thb-warning-shadow: rgba(245, 158, 11, 0.4);
+  --thb-warning-shadow-hover: rgba(245, 158, 11, 0.5);
+
+  /* Semantic — Info (Twitter blue) */
+  --thb-info: #1d9bf0;
+
+  /* Semantic — Purple (blocked state) */
+  --thb-purple: #a855f7;
+  --thb-purple-bg: #a855f720;
+
+  /* Badge pending */
+  --thb-badge-pending-bg: #374151;
+  --thb-badge-pending-text: #9ca3af;
+
+  /* Disabled */
+  --thb-disabled: #4b5563;
+
+  /* Shadows */
+  --thb-shadow-panel: rgba(0, 0, 0, 0.4);
+}
