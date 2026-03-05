@@ -22,6 +22,17 @@ export function getMainTweetAuthor(firstCell?: Element | null): string | null {
   return null;
 }
 
+// Extract the main tweet's text content from the first cellInnerDiv
+export function getMainTweetText(): string | null {
+  const cells = document.querySelectorAll('[data-testid="cellInnerDiv"]');
+  if (cells.length === 0) return null;
+
+  const firstCell = cells[0];
+  const tweet = firstCell.querySelector('[data-testid="tweet"]');
+  const tweetText = tweet?.querySelector('[data-testid="tweetText"]');
+  return tweetText?.textContent?.trim() || null;
+}
+
 // Get only NEW replies from DOM that aren't in the processed set
 export function getNewRepliesFromDOM(
   processedKeys: Set<string>,

@@ -3,7 +3,7 @@ import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
 import type { Settings, BlockingMode, ActionMode } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/openrouter";
-import { getNewRepliesFromDOM, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
+import { getNewRepliesFromDOM, getMainTweetText, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
 import "../../assets/theme.css";
 import "./style.css";
 
@@ -99,6 +99,7 @@ export default defineContentScript({
       replies = [];
       const processedKeys = new Set<string>();
       let scrollAttemptsWithoutNew = 0;
+      const mainTweetText = getMainTweetText();
 
       renderButton();
       renderPanel();
@@ -186,6 +187,7 @@ export default defineContentScript({
           const result = await browser.runtime.sendMessage({
             type: "ANALYZE_REPLY",
             text: replies[i].text,
+            mainTweetText,
           }) as AnalysisResult;
 
           replies[i].result = result;
@@ -423,22 +425,47 @@ async function reportUser(replyElement: HTMLElement): Promise<boolean> {
 
     await sleep(800);
 
-    // Handle optional second confirmation step
-    for (const sel of submitSelectors) {
-      const btn = document.querySelector(sel) as HTMLElement;
-      if (btn) {
-        btn.click();
-        break;
+    // After submitting the report, Twitter shows a "Submitted" screen
+    // with Mute/Block/Done options. Wait for and click "Done" to dismiss.
+    // Retry several times since the screen may take a moment to appear.
+    const doneSelectors = [
+      '[data-testid="reportFlowDoneButton"]',
+      '[data-testid="choiceSelectionNextButton"]',
+      '[data-testid="reportFlowNextButton"]',
+    ];
+
+    let dismissed = false;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      for (const sel of doneSelectors) {
+        const btn = document.querySelector(sel) as HTMLElement;
+        if (btn) {
+          btn.click();
+          dismissed = true;
+          break;
+        }
       }
+      if (dismissed) break;
+
+      // Fallback: look for "Done" button by text
+      const buttons = document.querySelectorAll("button, [role='button']");
+      for (const btn of buttons) {
+        const text = btn.textContent?.trim().toLowerCase() ?? "";
+        if (text === "done") {
+          (btn as HTMLElement).click();
+          dismissed = true;
+          break;
+        }
+      }
+      if (dismissed) break;
+
+      await sleep(500);
     }
 
     await sleep(300);
 
     // Dismiss any remaining dialogs
-    const doneButton = document.querySelector('[data-testid="reportFlowDoneButton"]') as HTMLElement;
-    if (doneButton) {
-      doneButton.click();
-      await sleep(300);
+    if (!dismissed) {
+      await dismissAllDialogs();
     }
 
     return true;

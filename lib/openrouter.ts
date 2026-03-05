@@ -65,10 +65,16 @@ export async function analyzeReply(
   text: string,
   apiKey: string,
   model: string,
-  blockingMode: BlockingMode = "hate"
+  blockingMode: BlockingMode = "hate",
+  mainTweetText?: string | null
 ): Promise<AnalysisResult> {
   try {
     const systemPrompt = blockingMode === "hate" ? HATE_SPEECH_PROMPT : CULT_PRAISE_PROMPT;
+
+    let userContent = text;
+    if (mainTweetText) {
+      userContent = `Original tweet: ${mainTweetText}\n\nReply: ${text}`;
+    }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -82,7 +88,7 @@ export async function analyzeReply(
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: text },
+          { role: "user", content: userContent },
         ],
         temperature: 0.1,
         max_tokens: 150,
