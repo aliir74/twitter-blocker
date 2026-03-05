@@ -1,14 +1,30 @@
-import type { BlockingMode } from "@/lib/storage";
+import type { BlockingMode, ActionMode } from "@/lib/storage";
 
 interface FloatingButtonProps {
   onClick: () => void;
   isScanning: boolean;
   dryRun?: boolean;
   blockingMode?: BlockingMode;
+  actionMode?: ActionMode;
 }
 
-export function FloatingButton({ onClick, isScanning, dryRun, blockingMode }: FloatingButtonProps) {
+export function FloatingButton({ onClick, isScanning, dryRun, blockingMode, actionMode }: FloatingButtonProps) {
   const isBlockAll = blockingMode === "blockAll";
+
+  function getBlockAllLabel() {
+    if (actionMode === "report") return "Report All";
+    if (actionMode === "both") return "Block & Report All";
+    return "Block All";
+  }
+
+  function getScanningLabel() {
+    if (isBlockAll) {
+      if (actionMode === "report") return "Reporting All";
+      if (actionMode === "both") return "Blocking & Reporting All";
+      return "Blocking All";
+    }
+    return "Scanning";
+  }
 
   return (
     <button
@@ -19,7 +35,7 @@ export function FloatingButton({ onClick, isScanning, dryRun, blockingMode }: Fl
       {isScanning ? (
         <>
           <span className="thb-spinner"></span>
-          {isBlockAll ? "Blocking All" : "Scanning"}{dryRun ? " (Dry Run)" : ""}...
+          {getScanningLabel()}{dryRun ? " (Dry Run)" : ""}...
         </>
       ) : (
         <>
@@ -30,7 +46,7 @@ export function FloatingButton({ onClick, isScanning, dryRun, blockingMode }: Fl
               <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14.59l-3.29-3.3 1.42-1.42L11 13.76l4.88-4.88 1.42 1.42L11 16.59z" />
             )}
           </svg>
-          {isBlockAll ? "Block All" : "Scan Replies"}{dryRun ? " (Dry Run)" : ""}
+          {isBlockAll ? getBlockAllLabel() : "Scan Replies"}{dryRun ? " (Dry Run)" : ""}
         </>
       )}
     </button>

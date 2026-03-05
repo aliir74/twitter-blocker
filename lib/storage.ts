@@ -1,4 +1,5 @@
 export type BlockingMode = "hate" | "cultPraise" | "blockAll";
+export type ActionMode = "block" | "report" | "both";
 
 export interface Settings {
   apiKey: string;
@@ -8,6 +9,7 @@ export interface Settings {
   autoScroll: boolean;
   maxScrollAttemptsWithoutNewContent: number;
   blockingMode: BlockingMode;
+  actionMode: ActionMode;
   dryRun: boolean;
 }
 
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoScroll: true,
   maxScrollAttemptsWithoutNewContent: 3,
   blockingMode: "hate",
+  actionMode: "block",
   dryRun: false,
 };
 

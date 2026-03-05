@@ -186,6 +186,14 @@
   border-left-color: var(--thb-purple);
 }
 
+.thb-reply-reported {
+  border-left-color: #f97316;
+}
+
+.thb-reply-actioned {
+  border-left-color: #8b5cf6;
+}
+
 .thb-reply-error {
   border-left-color: var(--thb-danger);
   opacity: 0.7;
@@ -252,7 +260,21 @@
   color: var(--thb-purple);
 }
 
+.thb-badge-reported {
+  background: #f9731620;
+  color: #f97316;
+}
+
+.thb-badge-actioned {
+  background: #8b5cf620;
+  color: #8b5cf6;
+}
+
 .thb-badge-error {
   background: var(--thb-danger-bg);
   color: var(--thb-danger);
+}
+
+.thb-reported-count {
+  color: #f97316;
 }
