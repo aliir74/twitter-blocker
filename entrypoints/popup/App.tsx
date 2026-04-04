@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { getSettings, saveSettings, type Settings, type BlockingMode, type ActionMode, AVAILABLE_MODELS, DEFAULT_SETTINGS } from "@/lib/storage";
+import { getSettings, saveSettings, getDailyUsage, type Settings, type BlockingMode, type ActionMode, type Locale, MAX_REPLIES_OPTIONS, DAILY_AI_LIMIT, DAILY_BLOCK_ALL_LIMIT } from "@/lib/storage";
 
 export default function App() {
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [status, setStatus] = useState<string>("");
+  const [dailyUsage, setDailyUsage] = useState<number>(0);
 
   useEffect(() => {
     loadSettings();
@@ -12,13 +13,22 @@ export default function App() {
   async function loadSettings() {
     const saved = await getSettings();
     setSettings(saved);
+    const usage = await getDailyUsage("blockAll");
+    const aiUsage = await getDailyUsage("ai");
+    setDailyUsage(saved.blockingMode === "blockAll" ? usage : aiUsage);
   }
 
   async function handleSave() {
+    if (!settings) return;
     await saveSettings(settings);
     setStatus("Settings saved!");
     setTimeout(() => setStatus(""), 2000);
   }
+
+  if (!settings) return null;
+
+  const isBlockAll = settings.blockingMode === "blockAll";
+  const dailyLimit = isBlockAll ? DAILY_BLOCK_ALL_LIMIT : DAILY_AI_LIMIT;
 
   return (
     <div className="popup-container">
@@ -102,60 +112,17 @@ export default function App() {
         </div>
       </div>
 
-      {settings.blockingMode !== "blockAll" && (
-        <>
-          <div className="form-group">
-            <label htmlFor="apiKey">OpenRouter API Key</label>
-            <input
-              id="apiKey"
-              type="password"
-              value={settings.apiKey}
-              onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
-              placeholder="sk-or-..."
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="model">Model</label>
-            <select
-              id="model"
-              value={settings.model}
-              onChange={(e) => setSettings({ ...settings, model: e.target.value })}
-            >
-              {AVAILABLE_MODELS.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confidenceThreshold">
-              Block if confidence &gt; {settings.confidenceThreshold}%
-            </label>
-            <input
-              id="confidenceThreshold"
-              type="range"
-              min="50"
-              max="100"
-              value={settings.confidenceThreshold}
-              onChange={(e) => setSettings({ ...settings, confidenceThreshold: parseInt(e.target.value) })}
-            />
-          </div>
-        </>
-      )}
-
       <div className="form-group">
         <label htmlFor="maxReplies">Max Replies to Scan</label>
-        <input
+        <select
           id="maxReplies"
-          type="number"
-          min="1"
-          max="200"
           value={settings.maxReplies}
-          onChange={(e) => setSettings({ ...settings, maxReplies: parseInt(e.target.value) || 50 })}
-        />
+          onChange={(e) => setSettings({ ...settings, maxReplies: parseInt(e.target.value) })}
+        >
+          {MAX_REPLIES_OPTIONS.map((n) => (
+            <option key={n} value={n}>{n} replies</option>
+          ))}
+        </select>
       </div>
 
       <div className="form-group">
@@ -169,22 +136,6 @@ export default function App() {
         </label>
       </div>
 
-      {settings.autoScroll && (
-        <div className="form-group">
-          <label htmlFor="maxScrollAttempts">
-            Stop after {settings.maxScrollAttemptsWithoutNewContent} scroll attempts with no new replies
-          </label>
-          <input
-            id="maxScrollAttempts"
-            type="range"
-            min="1"
-            max="10"
-            value={settings.maxScrollAttemptsWithoutNewContent}
-            onChange={(e) => setSettings({ ...settings, maxScrollAttemptsWithoutNewContent: parseInt(e.target.value) })}
-          />
-        </div>
-      )}
-
       <div className="form-group">
         <label className="checkbox-label">
           <input
@@ -196,9 +147,33 @@ export default function App() {
         </label>
       </div>
 
+      <div className="form-group">
+        <label>Language</label>
+        <div className="thb-language-toggle">
+          <button
+            type="button"
+            className={settings.locale === "en" ? "active" : ""}
+            onClick={() => setSettings({ ...settings, locale: "en" as Locale })}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            className={settings.locale === "fa" ? "active" : ""}
+            onClick={() => setSettings({ ...settings, locale: "fa" as Locale })}
+          >
+            فارسی
+          </button>
+        </div>
+      </div>
+
       <button onClick={handleSave}>Save Settings</button>
 
       {status && <div className="status">{status}</div>}
+
+      <div className="thb-usage-indicator">
+        {dailyUsage}/{dailyLimit} scans used today
+      </div>
     </div>
   );
 }

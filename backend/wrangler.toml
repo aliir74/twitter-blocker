@@ -1,0 +1,8 @@
+name = "twitter-blocker-backend"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "twitter-blocker-db"
+database_id = "placeholder-replace-after-creation"

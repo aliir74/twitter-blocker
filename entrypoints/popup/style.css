@@ -136,3 +136,57 @@ button:hover {
 .radio-hint-warning {
   color: var(--thb-danger);
 }
+
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--thb-accent);
+}
+
+/* Usage Indicator */
+.thb-usage-indicator {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--thb-text-muted);
+}
+
+/* Language Toggle */
+.thb-language-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.thb-language-toggle button {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  border: 1px solid var(--thb-border);
+  background: var(--thb-bg-secondary);
+  color: var(--thb-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thb-language-toggle button.active {
+  border-color: var(--thb-accent);
+  background: var(--thb-accent-bg);
+  color: var(--thb-accent);
+  font-weight: 600;
+}
+
+/* RTL Support */
+[dir="rtl"] .popup-container {
+  font-family: "Vazirmatn", "Tahoma", sans-serif;
+}
+
+[dir="rtl"] .radio-hint {
+  margin-left: 0;
+  margin-right: 20px;
+}

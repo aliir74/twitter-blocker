@@ -1,0 +1,20 @@
+{
+  "name": "twitter-blocker-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate:local": "wrangler d1 execute twitter-blocker-db --local --file=schema.sql",
+    "db:migrate:remote": "wrangler d1 execute twitter-blocker-db --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/workers-types": "^4.20250327.0",
+    "vitest": "^3.1.1",
+    "wrangler": "^4.14.0"
+  }
+}
