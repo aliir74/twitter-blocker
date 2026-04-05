@@ -1,9 +1,12 @@
 import ReactDOM from "react-dom/client";
 import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
+import { OnboardingOverlay } from "./OnboardingOverlay";
 import type { Settings, BlockingMode, ActionMode } from "@/lib/storage";
-import type { AnalysisResult } from "@/lib/openrouter";
+import { getHasSeenOnboarding, setHasSeenOnboarding, incrementDailyUsage } from "@/lib/storage";
+import type { AnalysisResult } from "@/lib/backend-client";
 import { getNewRepliesFromDOM, getMainTweetText, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
+import { setLocale } from "@/lib/i18n";
 import "../../assets/theme.css";
 import "./style.css";
 
@@ -24,6 +27,7 @@ export default defineContentScript({
 
     let panelRoot: ReactDOM.Root | null = null;
     let buttonRoot: ReactDOM.Root | null = null;
+    let onboardingRoot: ReactDOM.Root | null = null;
     let isScanning = false;
     let replies: ReplyData[] = [];
     let currentSettings: Settings | null = null;
@@ -37,9 +41,25 @@ export default defineContentScript({
     panelContainer.id = "thb-panel-container";
     document.body.appendChild(panelContainer);
 
+    const onboardingContainer = document.createElement("div");
+    onboardingContainer.id = "thb-onboarding-container";
+    document.body.appendChild(onboardingContainer);
+
+    function applyLocale(locale: string) {
+      setLocale(locale as "en" | "fa");
+      const dir = locale === "fa" ? "rtl" : "ltr";
+      buttonContainer.setAttribute("dir", dir);
+      buttonContainer.setAttribute("data-lang", locale);
+      panelContainer.setAttribute("dir", dir);
+      panelContainer.setAttribute("data-lang", locale);
+      onboardingContainer.setAttribute("dir", dir);
+      onboardingContainer.setAttribute("data-lang", locale);
+    }
+
     // Mount React components
     buttonRoot = ReactDOM.createRoot(buttonContainer);
     panelRoot = ReactDOM.createRoot(panelContainer);
+    onboardingRoot = ReactDOM.createRoot(onboardingContainer);
 
     function renderButton() {
       buttonRoot?.render(
@@ -61,8 +81,21 @@ export default defineContentScript({
           onClose={stopScan}
           blockingMode={currentSettings?.blockingMode ?? "hate"}
           actionMode={currentSettings?.actionMode ?? "block"}
+          locale={currentSettings?.locale ?? "en"}
         />
       );
+    }
+
+    async function showOnboarding(): Promise<void> {
+      return new Promise((resolve) => {
+        onboardingRoot?.render(
+          <OnboardingOverlay onContinue={() => {
+            onboardingRoot?.render(null);
+            setHasSeenOnboarding();
+            resolve();
+          }} />
+        );
+      });
     }
 
     async function startScan() {
@@ -75,6 +108,13 @@ export default defineContentScript({
         return;
       }
       const settings = currentSettings;
+      applyLocale(settings.locale);
+
+      // Show onboarding on first use
+      const hasSeenOnboarding = await getHasSeenOnboarding();
+      if (!hasSeenOnboarding) {
+        await showOnboarding();
+      }
 
       // Block All mode confirmation
       if (settings.blockingMode === "blockAll") {
@@ -87,12 +127,6 @@ export default defineContentScript({
           `Are you sure you want to continue?`
         );
         if (!confirmed) return;
-      } else {
-        // Only require API key for LLM-based modes
-        if (!settings.apiKey) {
-          alert("Please configure your OpenRouter API key in the extension settings.");
-          return;
-        }
       }
 
       isScanning = true;
@@ -145,9 +179,9 @@ export default defineContentScript({
 
         if (!foundNew) {
           scrollAttemptsWithoutNew++;
-          console.log(`No new content after scroll (attempt ${scrollAttemptsWithoutNew}/${settings.maxScrollAttemptsWithoutNewContent})`);
+          console.log(`No new content after scroll (attempt ${scrollAttemptsWithoutNew}/3)`);
 
-          if (scrollAttemptsWithoutNew >= settings.maxScrollAttemptsWithoutNewContent) {
+          if (scrollAttemptsWithoutNew >= 3) {
             console.log("Max scroll attempts reached without new content");
             break;
           }
@@ -166,6 +200,7 @@ export default defineContentScript({
             confidence: 100,
             reason: "Block All mode",
           };
+          await incrementDailyUsage("blockAll");
           renderPanel();
 
           // Attempt action (unless dry-run mode)
@@ -194,7 +229,7 @@ export default defineContentScript({
 
           if (result.error) {
             replies[i].status = "error";
-          } else if (result.isMatch && result.confidence >= settings.confidenceThreshold) {
+          } else if (result.isMatch) {
             replies[i].status = "flagged";
             renderPanel();
 
@@ -237,6 +272,7 @@ export default defineContentScript({
     async function init() {
       try {
         currentSettings = await browser.runtime.sendMessage({ type: "GET_SETTINGS" }) as Settings;
+        applyLocale(currentSettings.locale);
       } catch {
         // Settings will be loaded when scan starts
       }

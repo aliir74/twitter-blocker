@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { FloatingButton } from "../entrypoints/twitter.content/FloatingButton";
 import { LiveFeedPanel } from "../entrypoints/twitter.content/LiveFeedPanel";
 import type { ReplyData } from "../entrypoints/twitter.content/index";
+import { setLocale } from "../lib/i18n";
+
+// Ensure tests run in English locale
+beforeEach(() => {
+  setLocale("en");
+});
 
 describe("FloatingButton", () => {
   it("should render scan button when not scanning", () => {
@@ -61,7 +67,7 @@ describe("LiveFeedPanel", () => {
 
   it("should not render when no replies and not scanning", () => {
     const { container } = render(
-      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={[]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     expect(container.firstChild).toBeNull();
@@ -69,7 +75,7 @@ describe("LiveFeedPanel", () => {
 
   it("should render panel with replies", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     expect(screen.getByText("Scan Results (Hate Speech)")).toBeInTheDocument();
@@ -80,7 +86,7 @@ describe("LiveFeedPanel", () => {
 
   it("should display correct stats", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     expect(screen.getByText("Analyzed: 3/3")).toBeInTheDocument();
@@ -91,28 +97,29 @@ describe("LiveFeedPanel", () => {
   it("should call onClose when close button clicked", () => {
     const handleClose = vi.fn();
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={handleClose} blockingMode="hate" actionMode="block" locale="en" />
     );
 
-    const closeButton = screen.getByRole("button");
-    fireEvent.click(closeButton);
+    // Close button is the first button (before copy stats)
+    const buttons = screen.getAllByRole("button");
+    fireEvent.click(buttons[0]);
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
   it("should show status badges correctly", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     expect(screen.getByText(/Safe/)).toBeInTheDocument();
     expect(screen.getByText(/Hate \(95%\)/)).toBeInTheDocument();
-    expect(screen.getByText("Blocked")).toBeInTheDocument();
+    expect(screen.getByText("Blocked", { selector: ".thb-badge" })).toBeInTheDocument();
   });
 
   it("should show reason for hate content", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     expect(screen.getByText("Contains slur")).toBeInTheDocument();
@@ -129,7 +136,7 @@ describe("LiveFeedPanel", () => {
     };
 
     render(
-      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" />
+      <LiveFeedPanel replies={[longReply]} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
     );
 
     const truncatedText = screen.getByText(/A{100}\.\.\./);
@@ -138,7 +145,7 @@ describe("LiveFeedPanel", () => {
 
   it("should show cult praise labels when in cultPraise mode", () => {
     render(
-      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="cultPraise" actionMode="block" />
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="cultPraise" actionMode="block" locale="en" />
     );
 
     expect(screen.getByText("Scan Results (Cult Praise)")).toBeInTheDocument();
@@ -158,10 +165,10 @@ describe("LiveFeedPanel", () => {
     ];
 
     render(
-      <LiveFeedPanel replies={reportedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="report" />
+      <LiveFeedPanel replies={reportedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="report" locale="en" />
     );
 
-    expect(screen.getByText("Reported")).toBeInTheDocument();
+    expect(screen.getByText("Reported", { selector: ".thb-badge" })).toBeInTheDocument();
     expect(screen.getByText("Reported: 1")).toBeInTheDocument();
   });
 
@@ -177,11 +184,27 @@ describe("LiveFeedPanel", () => {
     ];
 
     render(
-      <LiveFeedPanel replies={actionedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="both" />
+      <LiveFeedPanel replies={actionedReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="both" locale="en" />
     );
 
     expect(screen.getByText("Blocked & Reported")).toBeInTheDocument();
     expect(screen.getByText("Blocked: 1")).toBeInTheDocument();
     expect(screen.getByText("Reported: 1")).toBeInTheDocument();
+  });
+
+  it("should show copy stats button when scan is complete", () => {
+    render(
+      <LiveFeedPanel replies={mockReplies} isScanning={false} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
+    );
+
+    expect(screen.getByText("Copy Stats")).toBeInTheDocument();
+  });
+
+  it("should not show copy stats button while scanning", () => {
+    render(
+      <LiveFeedPanel replies={mockReplies} isScanning={true} onClose={() => {}} blockingMode="hate" actionMode="block" locale="en" />
+    );
+
+    expect(screen.queryByText("Copy Stats")).not.toBeInTheDocument();
   });
 });

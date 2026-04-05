@@ -1,37 +1,36 @@
 import { describe, it, expect, vi } from "vitest";
-import { getSettings, saveSettings, DEFAULT_SETTINGS, AVAILABLE_MODELS } from "../lib/storage";
+import { getSettings, saveSettings, getDailyUsage, incrementDailyUsage, DEFAULT_SETTINGS, MAX_REPLIES_OPTIONS, DAILY_AI_LIMIT, DAILY_BLOCK_ALL_LIMIT } from "../lib/storage";
 import { browserMock, mockStorage } from "./setup";
 
 describe("storage", () => {
   describe("DEFAULT_SETTINGS", () => {
     it("should have correct default values", () => {
-      expect(DEFAULT_SETTINGS.apiKey).toBe("");
-      expect(DEFAULT_SETTINGS.model).toBe("google/gemma-3-12b-it");
+      expect(DEFAULT_SETTINGS.clientId).toBe("");
+      expect(DEFAULT_SETTINGS.locale).toBe("en");
       expect(DEFAULT_SETTINGS.maxReplies).toBe(50);
-      expect(DEFAULT_SETTINGS.confidenceThreshold).toBe(90);
       expect(DEFAULT_SETTINGS.autoScroll).toBe(true);
-      expect(DEFAULT_SETTINGS.maxScrollAttemptsWithoutNewContent).toBe(3);
       expect(DEFAULT_SETTINGS.blockingMode).toBe("hate");
       expect(DEFAULT_SETTINGS.actionMode).toBe("block");
       expect(DEFAULT_SETTINGS.dryRun).toBe(false);
     });
+
+    it("should not contain removed fields", () => {
+      const settings = DEFAULT_SETTINGS as Record<string, unknown>;
+      expect(settings.apiKey).toBeUndefined();
+      expect(settings.model).toBeUndefined();
+      expect(settings.confidenceThreshold).toBeUndefined();
+      expect(settings.maxScrollAttemptsWithoutNewContent).toBeUndefined();
+    });
   });
 
-  describe("AVAILABLE_MODELS", () => {
-    it("should include default model", () => {
-      const defaultModel = AVAILABLE_MODELS.find((m) => m.id === "google/gemma-3-12b-it");
-      expect(defaultModel).toBeDefined();
-      expect(defaultModel?.name).toContain("Persian");
+  describe("constants", () => {
+    it("should have valid max replies options", () => {
+      expect(MAX_REPLIES_OPTIONS).toEqual([25, 50, 100]);
     });
 
-    it("should have at least 3 models", () => {
-      expect(AVAILABLE_MODELS.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it("should have unique model IDs", () => {
-      const ids = AVAILABLE_MODELS.map((m) => m.id);
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(ids.length);
+    it("should have correct daily limits", () => {
+      expect(DAILY_AI_LIMIT).toBe(200);
+      expect(DAILY_BLOCK_ALL_LIMIT).toBe(500);
     });
   });
 
@@ -42,26 +41,23 @@ describe("storage", () => {
     });
 
     it("should return saved settings merged with defaults", async () => {
-      mockStorage["settings"] = { apiKey: "test-key", maxReplies: 100 };
+      mockStorage["settings"] = { clientId: "test-uuid", maxReplies: 100 };
 
       const settings = await getSettings();
 
-      expect(settings.apiKey).toBe("test-key");
+      expect(settings.clientId).toBe("test-uuid");
       expect(settings.maxReplies).toBe(100);
-      expect(settings.model).toBe(DEFAULT_SETTINGS.model);
-      expect(settings.confidenceThreshold).toBe(DEFAULT_SETTINGS.confidenceThreshold);
+      expect(settings.locale).toBe(DEFAULT_SETTINGS.locale);
     });
   });
 
   describe("saveSettings", () => {
     it("should save settings to storage", async () => {
       const newSettings = {
-        apiKey: "sk-or-test",
-        model: "openai/gpt-4o-mini",
+        clientId: "test-uuid-123",
+        locale: "fa" as const,
         maxReplies: 25,
-        confidenceThreshold: 90,
         autoScroll: true,
-        maxScrollAttemptsWithoutNewContent: 3,
         blockingMode: "hate" as const,
         actionMode: "block" as const,
         dryRun: false,
@@ -78,7 +74,6 @@ describe("storage", () => {
       const newSettings = {
         ...DEFAULT_SETTINGS,
         autoScroll: false,
-        maxScrollAttemptsWithoutNewContent: 5,
       };
 
       await saveSettings(newSettings);
@@ -86,24 +81,6 @@ describe("storage", () => {
       expect(browserMock.storage.sync.set).toHaveBeenCalledWith({
         settings: newSettings,
       });
-    });
-  });
-
-  describe("getSettings with auto-scroll", () => {
-    it("should return default auto-scroll settings when none saved", async () => {
-      const settings = await getSettings();
-      expect(settings.autoScroll).toBe(true);
-      expect(settings.maxScrollAttemptsWithoutNewContent).toBe(3);
-    });
-
-    it("should merge saved auto-scroll settings with defaults", async () => {
-      mockStorage["settings"] = { autoScroll: false, maxScrollAttemptsWithoutNewContent: 7 };
-
-      const settings = await getSettings();
-
-      expect(settings.autoScroll).toBe(false);
-      expect(settings.maxScrollAttemptsWithoutNewContent).toBe(7);
-      expect(settings.apiKey).toBe(DEFAULT_SETTINGS.apiKey);
     });
   });
 
@@ -165,6 +142,51 @@ describe("storage", () => {
       const settings = await getSettings();
 
       expect(settings.actionMode).toBe("both");
+    });
+  });
+
+  describe("getSettings with locale", () => {
+    it("should return default locale when none saved", async () => {
+      const settings = await getSettings();
+      expect(settings.locale).toBe("en");
+    });
+
+    it("should return saved locale", async () => {
+      mockStorage["settings"] = { locale: "fa" };
+
+      const settings = await getSettings();
+
+      expect(settings.locale).toBe("fa");
+    });
+  });
+
+  describe("getDailyUsage", () => {
+    it("should return 0 when no usage recorded", async () => {
+      const usage = await getDailyUsage("ai");
+      expect(usage).toBe(0);
+    });
+
+    it("should return stored usage count", async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      mockStorage[`usage_ai_${today}`] = 42;
+
+      const usage = await getDailyUsage("ai");
+      expect(usage).toBe(42);
+    });
+  });
+
+  describe("incrementDailyUsage", () => {
+    it("should increment from 0", async () => {
+      const count = await incrementDailyUsage("ai");
+      expect(count).toBe(1);
+    });
+
+    it("should increment existing count", async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      mockStorage[`usage_blockAll_${today}`] = 5;
+
+      const count = await incrementDailyUsage("blockAll");
+      expect(count).toBe(6);
     });
   });
 });

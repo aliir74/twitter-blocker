@@ -278,3 +278,119 @@
 .thb-reported-count {
   color: #f97316;
 }
+
+/* Copy Stats Button */
+.thb-copy-stats-btn {
+  margin: 8px 16px 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--thb-border);
+  border-radius: 8px;
+  background: var(--thb-bg-secondary);
+  color: var(--thb-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thb-copy-stats-btn:hover {
+  background: var(--thb-bg-hover);
+  color: var(--thb-text-primary);
+}
+
+/* Onboarding Overlay */
+.thb-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.thb-onboarding-card {
+  max-width: 320px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--thb-bg-primary);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.thb-onboarding-icon {
+  color: var(--thb-accent);
+  margin-bottom: 16px;
+}
+
+.thb-onboarding-text {
+  margin-bottom: 24px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--thb-text-secondary);
+}
+
+.thb-onboarding-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--thb-accent);
+  color: var(--thb-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.thb-onboarding-btn:hover {
+  background: var(--thb-accent-hover);
+}
+
+/* RTL Support */
+[data-lang="fa"] .thb-floating-button {
+  right: auto;
+  left: 24px;
+  font-family: "Vazirmatn", "Tahoma", sans-serif;
+}
+
+[data-lang="fa"] .thb-panel {
+  right: auto;
+  left: 24px;
+  font-family: "Vazirmatn", "Tahoma", sans-serif;
+}
+
+[data-lang="fa"] .thb-reply {
+  border-left: none;
+  border-right: 3px solid transparent;
+}
+
+[data-lang="fa"] .thb-reply-pending {
+  border-right-color: var(--thb-text-pending);
+}
+
+[data-lang="fa"] .thb-reply-analyzing {
+  border-right-color: var(--thb-warning);
+}
+
+[data-lang="fa"] .thb-reply-safe {
+  border-right-color: var(--thb-success);
+}
+
+[data-lang="fa"] .thb-reply-flagged {
+  border-right-color: var(--thb-danger);
+}
+
+[data-lang="fa"] .thb-reply-blocked {
+  border-right-color: var(--thb-purple);
+}
+
+[data-lang="fa"] .thb-reply-reported {
+  border-right-color: #f97316;
+}
+
+[data-lang="fa"] .thb-reply-actioned {
+  border-right-color: #8b5cf6;
+}
+
+[data-lang="fa"] .thb-reply-error {
+  border-right-color: var(--thb-danger);
+}
