@@ -3,7 +3,7 @@ import { FloatingButton } from "./FloatingButton";
 import { LiveFeedPanel } from "./LiveFeedPanel";
 import { OnboardingOverlay } from "./OnboardingOverlay";
 import type { Settings, BlockingMode, ActionMode } from "@/lib/storage";
-import { getHasSeenOnboarding, setHasSeenOnboarding } from "@/lib/storage";
+import { getHasSeenOnboarding, setHasSeenOnboarding, incrementDailyUsage } from "@/lib/storage";
 import type { AnalysisResult } from "@/lib/backend-client";
 import { getNewRepliesFromDOM, getMainTweetText, scrollToLoadMore, waitForNewContent, sleep } from "@/lib/dom-utils";
 import { setLocale } from "@/lib/i18n";
@@ -200,6 +200,7 @@ export default defineContentScript({
             confidence: 100,
             reason: "Block All mode",
           };
+          await incrementDailyUsage("blockAll");
           renderPanel();
 
           // Attempt action (unless dry-run mode)

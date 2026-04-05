@@ -191,6 +191,25 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
   return jsonResponse(result);
 }
 
+async function handleUsage(request: Request, env: Env): Promise<Response> {
+  const body = await request.json<{ clientId: string }>();
+
+  if (!body.clientId || typeof body.clientId !== "string") {
+    return jsonResponse({ error: "invalid_request", message: "clientId is required" }, 400);
+  }
+
+  const today = todayUTC();
+  const usage = await env.DB.prepare(
+    "SELECT requests, flagged FROM daily_usage WHERE client_id = ? AND date = ?"
+  ).bind(body.clientId, today).first<{ requests: number; flagged: number }>();
+
+  return jsonResponse({
+    used: usage?.requests || 0,
+    flagged: usage?.flagged || 0,
+    limit: DAILY_LIMIT,
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -215,6 +234,9 @@ export default {
           break;
         case "/analyze":
           response = await handleAnalyze(request, env);
+          break;
+        case "/usage":
+          response = await handleUsage(request, env);
           break;
         default:
           response = jsonResponse({ error: "not_found" }, 404);

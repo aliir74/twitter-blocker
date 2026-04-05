@@ -18,7 +18,7 @@ export interface UsageInfo {
 }
 
 // This URL will be updated when the worker is deployed
-const BACKEND_URL = "https://twitter-blocker-backend.workers.dev";
+const BACKEND_URL = "https://twitter-blocker-backend.aliirani74.workers.dev";
 
 export async function registerClient(clientId: string): Promise<RegisterResponse> {
   try {
@@ -36,6 +36,25 @@ export async function registerClient(clientId: string): Promise<RegisterResponse
   } catch (error) {
     console.error("Failed to register client:", error);
     return { ok: false, dailyLimit: 200 };
+  }
+}
+
+export async function getUsage(clientId: string): Promise<UsageInfo> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/usage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId }),
+    });
+
+    if (!response.ok) {
+      return { used: 0, limit: 200 };
+    }
+
+    const data = await response.json();
+    return { used: data.used || 0, limit: data.limit || 200 };
+  } catch {
+    return { used: 0, limit: 200 };
   }
 }
 

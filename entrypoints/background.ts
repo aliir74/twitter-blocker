@@ -1,5 +1,5 @@
-import { analyzeReply, registerClient } from "@/lib/backend-client";
-import { getSettings, saveSettings } from "@/lib/storage";
+import { analyzeReply, registerClient, getUsage } from "@/lib/backend-client";
+import { getSettings, saveSettings, incrementDailyUsage } from "@/lib/storage";
 
 export default defineBackground(() => {
   console.log("Twitter Hate Blocker background worker started");
@@ -22,6 +22,14 @@ export default defineBackground(() => {
       return true;
     }
 
+    if (message.type === "GET_USAGE") {
+      getSettings().then(async (settings) => {
+        const usage = await getUsage(settings.clientId);
+        sendResponse(usage);
+      });
+      return true;
+    }
+
     if (message.type === "ANALYZE_REPLY") {
       getSettings().then(async (settings) => {
         const result = await analyzeReply(
@@ -30,6 +38,9 @@ export default defineBackground(() => {
           settings.blockingMode,
           message.mainTweetText
         );
+        if (!result.error) {
+          await incrementDailyUsage("ai");
+        }
         sendResponse(result);
       });
       return true;

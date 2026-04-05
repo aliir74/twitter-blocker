@@ -121,7 +121,7 @@ const strings = {
     error: "خطا",
 
     // Popup settings
-    title: "پاک‌کن توییتر",
+    title: "توییتر پاک‌کن",
     blockingMode: "حالت بلاک",
     hateSpeech: "نفرت‌پراکنی",
     hateSpeechHint: "بلاک زبان توهین‌آمیز و آزاردهنده",

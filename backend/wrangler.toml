@@ -5,4 +5,4 @@ compatibility_date = "2025-04-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "twitter-blocker-db"
-database_id = "placeholder-replace-after-creation"
+database_id = "6e6921e2-72ff-416f-82cb-fc3e51619f48"
